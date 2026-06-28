@@ -258,3 +258,61 @@ px4_offboard_lab
 ### Next Step
 
 - Run the hover node deliberately in PX4 SITL only after starting Micro XRCE-DDS Agent, PX4 SITL Gazebo, and sourcing the ROS 2 workspace.
+
+## 2026-06-28 Phase 3 Offboard Hover SITL Success
+
+### Environment
+
+- OS: Windows 11 host with WSL2 Ubuntu-22.04.
+- PX4: `PX4-Autopilot` at `/home/yjs/src/PX4-Autopilot`.
+- ROS 2: Humble.
+- ROS 2 workspace: `/home/yjs/px4_ros2_ws`.
+- Package: `px4_offboard_lab`.
+- Vehicle: Gazebo X500 in PX4 SITL.
+
+### Goal
+
+- Verify ROS 2 Offboard takeoff, hover, land, and disarm in PX4 SITL.
+
+### Control Flow
+
+```text
+setpoint warm-up -> arm -> OFFBOARD -> hover -> land -> disarm
+```
+
+### Target
+
+- PX4 local NED target: `(x=0.0, y=0.0, z=-2.0)`.
+- NED `z` is positive downward, so negative `z` means upward.
+
+### Observations
+
+- PX4 commander reported `Armed by external command`.
+- PX4 commander reported `Takeoff detected`.
+- ROS 2 node entered hover stage with `arming_state=2` and `nav_state=14`.
+- Vehicle reached close to the target NED hover position `(0.0, 0.0, -2.0)`.
+- Observed NED `z` converged to about `-1.97 m`.
+- Node sent `Land command sent`.
+- PX4 commander reported `Landing detected`.
+- PX4 commander reported `Disarmed by landing`.
+- Node printed `Offboard hover node sequence complete; shutting down`.
+
+### Artifacts
+
+- Committable lightweight CSV: `logs/offboard_hover_first_success.csv`.
+- Local ULog artifact: `logs/ulg/offboard_hover_first_success.ulg`.
+- ULog files under `logs/ulg/*.ulg` are ignored by default and are not intended for normal commits.
+
+### Issues
+
+- The first failed run was caused by missing GCS / preflight health checks and did not take off.
+- The successful run required a QGroundControl connection or otherwise resolving the SITL preflight checks.
+
+### Conclusion
+
+- Phase 3 completed: ROS 2 Offboard hover in PX4 SITL verified.
+- This result is simulation-only and not for real aircraft deployment.
+
+### Next Step
+
+- Preserve the CSV artifact, keep ULog local by default, and proceed to structured trajectory experiments only in SITL.

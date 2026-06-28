@@ -2,7 +2,7 @@
 
 This repository is a research-oriented scaffold for quadrotor simulation trajectory tracking and log analysis based on PX4 SITL, Gazebo, and ROS 2 Offboard control.
 
-Current status: Phase 3 in progress: ROS 2 Offboard hover package implemented and built for SITL. No Offboard flight test has been run from this repository yet.
+Current status: Phase 3 completed: ROS 2 Offboard hover in PX4 SITL verified.
 
 ## Project Goal
 
@@ -33,7 +33,7 @@ Build a reproducible PX4 SITL + Gazebo + ROS 2 Offboard workflow for simulated q
 
 1. Environment setup
 2. Verify PX4 SITL, Gazebo, Micro XRCE-DDS Agent, and ROS 2 topic bridge
-3. Implement ROS 2 Offboard takeoff and hover node
+3. Implement and verify ROS 2 Offboard takeoff and hover node in PX4 SITL
 4. Record logs with rosbag2 and PX4 ULog
 5. Visualize tracking errors
 6. Organize README, results, and experiment notes
@@ -66,7 +66,7 @@ The node subscribes:
 - `/fmu/out/vehicle_status_v4` for the currently observed PX4 message-versioned topic
 - `/fmu/out/vehicle_odometry`
 
-The default target hover point is PX4 local NED `(x=0.0, y=0.0, z=-2.0)`. In NED, negative `z` means upward.
+The verified target hover point is PX4 local NED `(x=0.0, y=0.0, z=-2.0)`. In NED, negative `z` means upward. The first successful run converged to about `z=-1.97 m`.
 
 To build after copying the package into the ROS 2 workspace:
 
@@ -98,10 +98,33 @@ For command-free rehearsal:
 bash scripts/run_offboard_hover.sh --dry-run
 ```
 
+Verified Phase 3 control flow:
+
+```text
+setpoint warm-up -> arm -> OFFBOARD -> hover -> land -> disarm
+```
+
+Observed success markers:
+
+- PX4 commander reported `Armed by external command`.
+- PX4 commander reported `Takeoff detected`.
+- ROS 2 node reached hover stage with `arming_state=2` and `nav_state=14`.
+- Vehicle reached close to NED target `(0.0, 0.0, -2.0)`, with observed `z` about `-1.97 m`.
+- Node sent `Land command sent`.
+- PX4 commander reported `Landing detected` and `Disarmed by landing`.
+- Node printed `Offboard hover node sequence complete; shutting down`.
+
+Experiment artifacts:
+
+- Lightweight CSV artifact intended for this repository: `logs/offboard_hover_first_success.csv`.
+- Local ULog artifact: `logs/ulg/offboard_hover_first_success.ulg`.
+
+ULog files are ignored by default and should not be committed unless there is a specific reason to preserve a small curated binary artifact.
+
 ## Safety
 
-The Offboard hover node is simulation-only and not for real aircraft. Do not connect it to a physical vehicle. Phase 3 code creation and build validation do not count as a successful flight test.
+The Offboard hover node is simulation-only and not for real aircraft deployment. Do not connect it to a physical vehicle.
 
 ## Notes
 
-PX4-Autopilot is kept outside this repository at `/home/yjs/src/PX4-Autopilot`. ROS 2 Humble, Micro XRCE-DDS Agent, `px4_msgs`, and `px4_ros_com` have been installed and the PX4-to-ROS 2 `/fmu/...` topic bridge has been verified. Custom Offboard hover code now exists, but actual hover flight validation is still pending.
+PX4-Autopilot is kept outside this repository at `/home/yjs/src/PX4-Autopilot`. ROS 2 Humble, Micro XRCE-DDS Agent, `px4_msgs`, and `px4_ros_com` have been installed and the PX4-to-ROS 2 `/fmu/...` topic bridge has been verified. Custom Offboard hover has now been verified in PX4 SITL.

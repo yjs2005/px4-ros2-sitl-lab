@@ -198,3 +198,37 @@ ros2 topic list | grep fmu
 - This package is simulation-only and not for real aircraft.
 - Do not connect the node to a physical vehicle.
 - Actual flight validation must be deliberately run in PX4 SITL after Agent, PX4, Gazebo, and ROS 2 topics are verified.
+
+## Phase 3 First Failed Run: Preflight / GCS Not Ready
+
+### Problem Description
+
+- The first Offboard hover attempt did not take off.
+- PX4 preflight health checks were not satisfied, including the missing GCS condition.
+
+### Error Message
+
+```text
+Preflight Fail: No connection to the GCS
+```
+
+### Attempts
+
+- Verified that the Offboard node was publishing the expected `/fmu/in/...` setpoints and commands.
+- Checked PX4 commander output for arming, takeoff, landing, and disarm state changes.
+- Resolved SITL preflight readiness by using a QGroundControl connection or otherwise satisfying the relevant SITL preflight checks.
+
+### Final Solution
+
+- The successful run completed after the preflight/GCS issue was resolved.
+- PX4 commander reported `Armed by external command`, `Takeoff detected`, `Landing detected`, and `Disarmed by landing`.
+- The node reached hover with `arming_state=2`, `nav_state=14`, converged to about `z=-1.97 m`, sent land, and shut down cleanly.
+
+### Related Environment
+
+- OS: Windows 11 + WSL2 Ubuntu-22.04
+- ROS 2: Humble
+- PX4: `/home/yjs/src/PX4-Autopilot`
+- Gazebo: X500 SITL
+- Agent: `MicroXRCEAgent udp4 -p 8888`
+- Node: `ros2 run px4_offboard_lab offboard_hover`

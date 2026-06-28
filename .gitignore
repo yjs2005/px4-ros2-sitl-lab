@@ -20,6 +20,7 @@ rosbag2_*/
 *.mcap
 
 # PX4 ULog and converted logs
+logs/ulg/*.ulg
 *.ulg
 *.ulg.csv
 *.ulog
@@ -42,4 +43,3 @@ results/videos/*
 .DS_Store
 Thumbs.db
 desktop.ini
-
