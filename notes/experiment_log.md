@@ -133,3 +133,62 @@ make px4_sitl gz_x500
 ### Next Step
 
 - Continue with QGroundControl, ROS 2, and Offboard integration in later phases.
+
+## 2026-06-28 PX4 ROS 2 Topic Bridge Phase 2 Verification
+
+### Environment
+
+- OS: Windows 11 host with WSL2 Ubuntu-22.04.
+- PX4: `PX4-Autopilot` at `/home/yjs/src/PX4-Autopilot`.
+- ROS 2: Humble at `/opt/ros/humble/bin/ros2`.
+- ROS 2 workspace: `/home/yjs/px4_ros2_ws`.
+- Packages: `px4_msgs` and `px4_ros_com` built with `colcon build --symlink-install`.
+- Agent: `MicroXRCEAgent` available from source install.
+
+### Goal
+
+- Verify that PX4 SITL, Gazebo, Micro XRCE-DDS Agent, and ROS 2 can communicate through the `/fmu/...` topic bridge.
+
+### Commands
+
+```bash
+MicroXRCEAgent udp4 -p 8888
+cd /home/yjs/src/PX4-Autopilot
+make px4_sitl gz_x500
+source /opt/ros/humble/setup.bash
+source /home/yjs/px4_ros2_ws/install/setup.bash
+ros2 topic list | grep fmu
+timeout 10 ros2 topic echo /fmu/out/vehicle_odometry --once
+```
+
+### Logs And Result Files
+
+- Agent log: `/tmp/px4_agent.log`.
+- PX4 SITL log: `/tmp/px4_sitl.log`.
+- ROS 2 topic capture: `/tmp/px4_topics.txt`.
+- ROS 2 odometry capture: `/tmp/px4_odometry_once.txt`.
+
+### Observations
+
+- Micro XRCE-DDS Agent started on UDP port `8888`.
+- Agent log showed `session established` and DDS entities being created.
+- PX4 SITL launched Gazebo X500 again.
+- PX4 log showed `Gazebo world is ready`, `Spawning Gazebo model`, `world: default, model: x500_0`, and `uxrce_dds_client` connecting to `127.0.0.1:8888`.
+- ROS 2 topic list showed `/fmu/in/...` and `/fmu/out/...` topics.
+- Observed input topics include `/fmu/in/offboard_control_mode`, `/fmu/in/trajectory_setpoint`, and `/fmu/in/vehicle_command`.
+- Observed output topics include `/fmu/out/vehicle_odometry`, `/fmu/out/vehicle_status_v4`, and `/fmu/out/vehicle_local_position_v1`.
+- One `/fmu/out/vehicle_odometry` message was read successfully. The captured message included timestamp `1782654529684813`, position values, orientation quaternion, velocity, variances, and `quality: 0`.
+
+### Issues
+
+- `source ~/.bashrc` did not expose `ros2` inside the non-interactive WSL script. Explicitly sourcing `/opt/ros/humble/setup.bash` and `~/px4_ros2_ws/install/setup.bash` worked.
+- `ros2 interface list | grep px4_msgs | head` can print `BrokenPipeError` because `head` closes the pipe early. This is not treated as a ROS 2 or `px4_msgs` failure.
+- `Preflight Fail: No connection to the GCS` and `system power unavailable` remain deferred to later QGroundControl / Offboard work.
+
+### Conclusion
+
+- Phase 2 completed: PX4 SITL, Gazebo, Micro XRCE-DDS Agent, and ROS 2 topic bridge verified.
+
+### Next Step
+
+- Proceed to QGroundControl / Offboard validation before writing custom trajectory control code.

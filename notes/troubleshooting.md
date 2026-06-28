@@ -101,3 +101,45 @@ system power unavailable
 - PX4: cloned at `/home/yjs/src/PX4-Autopilot`
 - Gazebo: Harmonic, installed through `bash ./Tools/setup/ubuntu.sh`
 - Command: `make px4_sitl gz_x500`
+
+## Phase 2 Non-Blocking Notes
+
+### Problem Description
+
+- PX4-to-ROS 2 communication is verified, but several notes should be kept for repeatability.
+- These are not blockers for Phase 2.
+
+### Messages
+
+```text
+BrokenPipeError: [Errno 32] Broken pipe
+ros2: command not found
+Preflight Fail: No connection to the GCS
+system power unavailable
+```
+
+### Attempts
+
+- `BrokenPipeError` appeared when piping `ros2 interface list | grep px4_msgs | head`; this happens because `head` exits early.
+- In a non-interactive WSL script, `source ~/.bashrc` did not expose `ros2`.
+- Explicit source commands worked:
+
+```bash
+source /opt/ros/humble/setup.bash
+source ~/px4_ros2_ws/install/setup.bash
+```
+
+### Final Solution
+
+- Do not treat the `head` pipeline `BrokenPipeError` as a build or interface error.
+- For scripted checks, source ROS 2 and the workspace setup files explicitly instead of relying only on `~/.bashrc`.
+- Keep the GCS and power warnings as later QGroundControl / Offboard phase items.
+
+### Related Environment
+
+- OS: Windows 11 + WSL2 Ubuntu-22.04
+- ROS 2: Humble
+- PX4: cloned at `/home/yjs/src/PX4-Autopilot`
+- Gazebo: Harmonic
+- Agent: `MicroXRCEAgent udp4 -p 8888`
+- Command: `ros2 topic echo /fmu/out/vehicle_odometry --once`

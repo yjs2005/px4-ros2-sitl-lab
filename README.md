@@ -2,7 +2,7 @@
 
 This repository is a research-oriented scaffold for quadrotor simulation trajectory tracking and log analysis based on PX4 SITL, Gazebo, and ROS 2 Offboard control.
 
-Current status: Phase 1 completed: PX4 SITL + Gazebo X500 launched successfully.
+Current status: Phase 2 completed: PX4 SITL, Gazebo, Micro XRCE-DDS Agent, and ROS 2 topic bridge verified.
 
 ## Project Goal
 
@@ -40,4 +40,4 @@ Build a reproducible PX4 SITL + Gazebo + ROS 2 Offboard workflow for simulated q
 
 ## Notes
 
-PX4-Autopilot is kept outside this repository at `/home/yjs/src/PX4-Autopilot`. ROS 2 and Offboard control have not been installed or verified yet.
+PX4-Autopilot is kept outside this repository at `/home/yjs/src/PX4-Autopilot`. ROS 2 Humble, Micro XRCE-DDS Agent, `px4_msgs`, and `px4_ros_com` have been installed and the PX4-to-ROS 2 `/fmu/...` topic bridge has been verified. Custom Offboard control code has not been written yet.

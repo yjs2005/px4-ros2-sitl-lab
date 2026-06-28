@@ -15,12 +15,12 @@
 
 ## Planned Installation Items
 
-- ROS 2 Humble
+- ROS 2 Humble: verified installed at `/opt/ros/humble/bin/ros2`
 - PX4-Autopilot: verified cloned at `/home/yjs/src/PX4-Autopilot`
 - PX4 Gazebo dependencies: verified installed with `bash ./Tools/setup/ubuntu.sh`
-- Micro XRCE-DDS Agent
-- px4_msgs
-- px4_ros_com
+- Micro XRCE-DDS Agent: verified available as `MicroXRCEAgent`
+- px4_msgs: verified cloned and built in `/home/yjs/px4_ros2_ws`
+- px4_ros_com: verified cloned and built in `/home/yjs/px4_ros2_ws`
 
 ## Planned Check Commands
 
@@ -32,13 +32,14 @@ ros2 topic list | grep fmu
 Verification status:
 
 - `make px4_sitl gz_x500`: verified successful.
-- `ros2 topic list | grep fmu`: not verified; ROS 2 is not installed yet.
+- `ros2 topic list | grep fmu`: verified successful.
+- `ros2 topic echo /fmu/out/vehicle_odometry --once`: verified successful.
 
 ## Current Local Environment Check
 
 See [../notes/local_environment_report.md](../notes/local_environment_report.md).
 
-The current repository records that PX4 SITL + Gazebo X500 has been verified. It does not claim that ROS 2 Humble or Offboard control has already been installed or run successfully.
+The current repository records that PX4 SITL + Gazebo X500 and the PX4-to-ROS 2 topic bridge have been verified. It does not claim that custom Offboard control has already been written or run successfully.
 
 ## 2026-06-28 WSL Status And PX4 Clone Note
 
@@ -59,3 +60,19 @@ The current repository records that PX4 SITL + Gazebo X500 has been verified. It
 - PX4 reached the `pxh>` prompt and reported that the startup script returned successfully.
 - PX4 ULog was generated at `./log/2026-06-28/12_55_55.ulg`.
 - Current warnings `Preflight Fail: No connection to the GCS` and `system power unavailable` are deferred to later QGroundControl / Offboard work.
+
+## Verified Phase 2 Communication
+
+- Phase 2 completed: PX4 SITL, Gazebo, Micro XRCE-DDS Agent, and ROS 2 topic bridge verified.
+- ROS 2 Humble is available at `/opt/ros/humble/bin/ros2`.
+- Micro XRCE-DDS Agent was started with `MicroXRCEAgent udp4 -p 8888`.
+- PX4 SITL was started from `/home/yjs/src/PX4-Autopilot` with `make px4_sitl gz_x500`.
+- Agent log path: `/tmp/px4_agent.log`.
+- PX4 SITL log path: `/tmp/px4_sitl.log`.
+- ROS 2 topic capture path: `/tmp/px4_topics.txt`.
+- ROS 2 odometry capture path: `/tmp/px4_odometry_once.txt`.
+- Agent log confirmed `session established`.
+- PX4 log confirmed `Gazebo world is ready`, `Spawning Gazebo model`, `world: default, model: x500_0`, and `uxrce_dds_client` using UDP `127.0.0.1:8888`.
+- ROS 2 observed both `/fmu/in/...` and `/fmu/out/...` topics, including `/fmu/in/trajectory_setpoint`, `/fmu/in/offboard_control_mode`, `/fmu/out/vehicle_odometry`, and `/fmu/out/vehicle_status_v4`.
+- A single `/fmu/out/vehicle_odometry` message was read successfully with `ros2 topic echo /fmu/out/vehicle_odometry --once`.
+- In non-interactive WSL commands, explicitly sourcing `/opt/ros/humble/setup.bash` and `~/px4_ros2_ws/install/setup.bash` was required for `ros2` to be available.
