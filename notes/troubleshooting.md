@@ -143,3 +143,58 @@ source ~/px4_ros2_ws/install/setup.bash
 - Gazebo: Harmonic
 - Agent: `MicroXRCEAgent udp4 -p 8888`
 - Command: `ros2 topic echo /fmu/out/vehicle_odometry --once`
+
+## Phase 3 Offboard Hover Common Issues
+
+### Offboard Mode Does Not Engage
+
+- Check that `/fmu/in/offboard_control_mode` and `/fmu/in/trajectory_setpoint` are published before sending the OFFBOARD command.
+- PX4 requires continuous setpoints before and during Offboard mode.
+- Keep setpoint publish rate at 10 Hz or higher; this package defaults to 20 Hz.
+
+### No `/fmu/out/vehicle_odometry`
+
+- Confirm Micro XRCE-DDS Agent is running:
+
+```bash
+MicroXRCEAgent udp4 -p 8888
+```
+
+- Confirm PX4 SITL is running and the Agent session is established.
+- Confirm the ROS 2 workspace is sourced:
+
+```bash
+source /opt/ros/humble/setup.bash
+source ~/px4_ros2_ws/install/setup.bash
+ros2 topic list | grep fmu
+```
+
+### Agent Does Not Connect
+
+- Start Agent before PX4 SITL when possible.
+- Check `/tmp/px4_agent.log` for `session established`.
+- Check PX4 log for `uxrce_dds_client` using UDP `127.0.0.1:8888`.
+
+### NED `z` Direction Is Reversed
+
+- PX4 local setpoints use NED: North, East, Down.
+- Positive `z` moves downward.
+- Negative `z` moves upward.
+- The default hover target is `z=-2.0`, meaning about 2 meters up from the local origin.
+
+### Failsafe From Low Setpoint Rate
+
+- Offboard control can fail if setpoint publication drops below PX4's required rate.
+- Use a fixed timer at 20 Hz and avoid blocking work inside the timer callback.
+- Do not run heavy logging, plotting, or shell commands inside the control loop.
+
+### Vehicle Status Topic Has A Version Suffix
+
+- Current Phase 2 topic discovery observed `/fmu/out/vehicle_status_v4`.
+- The node subscribes to both `/fmu/out/vehicle_status` and `/fmu/out/vehicle_status_v4` for compatibility.
+
+### Real-Aircraft Safety
+
+- This package is simulation-only and not for real aircraft.
+- Do not connect the node to a physical vehicle.
+- Actual flight validation must be deliberately run in PX4 SITL after Agent, PX4, Gazebo, and ROS 2 topics are verified.

@@ -192,3 +192,69 @@ timeout 10 ros2 topic echo /fmu/out/vehicle_odometry --once
 ### Next Step
 
 - Proceed to QGroundControl / Offboard validation before writing custom trajectory control code.
+
+## 2026-06-28 Phase 3 Offboard Hover Code Implementation
+
+### Environment
+
+- OS: Windows 11 host with WSL2 Ubuntu-22.04.
+- PX4: `PX4-Autopilot` at `/home/yjs/src/PX4-Autopilot`.
+- ROS 2: Humble.
+- ROS 2 workspace: `/home/yjs/px4_ros2_ws`.
+- Existing bridge packages: `px4_msgs` and `px4_ros_com`.
+
+### Goal
+
+- Create a simulation-only ROS 2 Python package for PX4 Offboard takeoff, hover, CSV logging, and landing-stage handoff.
+
+### Commands
+
+```bash
+cd ~/px4_ros2_ws
+source /opt/ros/humble/setup.bash
+source install/setup.bash
+colcon build --symlink-install
+source install/setup.bash
+ros2 pkg list | grep px4_offboard_lab
+```
+
+### Observations
+
+- Package source was added under `ros2/px4_offboard_lab/` in this repository.
+- The package is intended to be copied to `~/px4_ros2_ws/src/px4_offboard_lab` for build and SITL-only execution.
+- Node name: `offboard_hover`.
+- Default target is PX4 NED `(x=0.0, y=0.0, z=-2.0)`.
+- The node publishes setpoints at 20 Hz and sends warm-up setpoints before requesting arm and OFFBOARD mode.
+- CSV logs are written under `~/px4_ros2_ws/logs/` by default.
+
+### Issues
+
+- No Offboard flight test was run in this phase.
+- This entry records code implementation and build validation only, not flight success.
+
+### Build Validation
+
+```text
+Starting >>> px4_msgs
+Finished <<< px4_msgs
+Starting >>> px4_offboard_lab
+Starting >>> px4_ros_com
+Finished <<< px4_ros_com
+Finished <<< px4_offboard_lab
+Summary: 3 packages finished
+```
+
+Package discovery:
+
+```text
+px4_offboard_lab
+```
+
+### Conclusion
+
+- Phase 3 Offboard hover code implementation and build validation completed.
+- No Offboard flight test was run, so this is not a flight-success record.
+
+### Next Step
+
+- Run the hover node deliberately in PX4 SITL only after starting Micro XRCE-DDS Agent, PX4 SITL Gazebo, and sourcing the ROS 2 workspace.
