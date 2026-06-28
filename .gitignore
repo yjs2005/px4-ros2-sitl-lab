@@ -1,0 +1,45 @@
+# ROS workspace outputs
+build/
+install/
+log/
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+venv/
+env/
+
+# rosbag2 outputs
+rosbag2_*/
+*.db3
+*.mcap
+
+# PX4 ULog and converted logs
+*.ulg
+*.ulg.csv
+*.ulog
+
+# Large logs and media
+results/logs/*
+results/videos/*
+*.bag
+*.log
+*.mp4
+*.mov
+*.avi
+*.mkv
+
+# Keep result directories
+!results/logs/.gitkeep
+!results/videos/.gitkeep
+
+# System files
+.DS_Store
+Thumbs.db
+desktop.ini
+
