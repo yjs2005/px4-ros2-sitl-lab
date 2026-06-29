@@ -30,7 +30,9 @@ media/videos/
 Suggested demos:
 
 - `circle_gazebo_demo`
+- `circle_baseline_vs_feedforward`
 - `square_gazebo_demo`
+- `square_baseline_vs_smooth`
 - `figure8_gazebo_demo`
 
 Large videos should not be committed by default. See `docs/visual_recording.md`.

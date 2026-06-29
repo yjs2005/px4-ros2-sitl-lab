@@ -42,8 +42,28 @@ PX4 local position 使用 NED 坐标系，`z` 轴向下，因此 `z=-2.0` 表示
 统一节点：
 
 ```bash
-ros2 run px4_offboard_lab offboard_trajectory --ros-args -p trajectory:=circle
+ros2 run px4_offboard_lab offboard_trajectory --ros-args -p trajectory:=circle -p controller_mode:=baseline
 ```
+
+## 控制模式对比实验计划
+
+本项目不改 PX4 内部飞控。PX4 仍负责位置、速度、姿态和角速度闭环控制；本项目只在 ROS 2 Offboard 外层改进轨迹 setpoint 的生成方式。
+
+| 控制模式 | 定义 | 状态 |
+| --- | --- | --- |
+| `baseline` | position-only setpoint，velocity/acceleration 为 NaN | 已实现 |
+| `feedforward` | position + velocity feedforward，acceleration 暂为 NaN | 已实现，待成对实验 |
+| `smooth` | 平滑轨迹 / 拐角减速 + velocity feedforward | 已实现，待成对实验 |
+
+计划对比：
+
+- `circle baseline` vs `circle feedforward`
+- `figure8 baseline` vs `figure8 feedforward`
+- `square baseline` vs `square smooth`
+- `line baseline` vs `line smooth`
+- `z_step baseline` vs `z_step smooth`
+
+当前还没有完整成对控制对比实验结果，因此 README Results 不提前宣称误差下降。详细说明见 [docs/control_improvement.md](docs/control_improvement.md)。
 
 ## 项目亮点
 
@@ -100,10 +120,10 @@ make px4_sitl gz_x500
 4. 终端 3 运行轨迹节点：
 
 ```bash
-bash scripts/run_trajectory.sh circle
+bash scripts/run_trajectory.sh circle baseline
 ```
 
-可选轨迹：`hover`、`line`、`square`、`circle`、`figure8`、`z_step`。
+可选轨迹：`hover`、`line`、`square`、`circle`、`figure8`、`z_step`。可选控制模式：`baseline`、`feedforward`、`smooth`。
 
 ## 如何截图和录屏
 
@@ -137,7 +157,9 @@ ros2 pkg executables px4_offboard_lab
 ```bash
 bash scripts/run_offboard_hover.sh
 bash scripts/run_figure8.sh
-bash scripts/run_trajectory.sh circle
+bash scripts/run_trajectory.sh circle baseline
+bash scripts/run_trajectory.sh circle feedforward
+bash scripts/run_trajectory.sh square smooth
 ```
 
 这些脚本不会自动启动 PX4、Gazebo 或 Micro XRCE-DDS Agent。

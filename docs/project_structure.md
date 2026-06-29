@@ -14,7 +14,7 @@ Main nodes:
 
 - `offboard_hover.py`: SITL-only Offboard takeoff, hover, land, and CSV logging.
 - `offboard_figure8.py`: SITL-only Offboard figure-eight trajectory tracking and CSV logging.
-- `offboard_trajectory.py`: unified SITL-only trajectory runner supporting `hover`, `line`, `square`, `circle`, `figure8`, and `z_step`.
+- `offboard_trajectory.py`: unified SITL-only trajectory runner supporting `hover`, `line`, `square`, `circle`, `figure8`, and `z_step`, with `baseline`, `feedforward`, and `smooth` controller modes.
 
 The package should be synced into:
 
@@ -28,7 +28,7 @@ Shell helpers for SITL and offline workflows:
 
 - `run_offboard_hover.sh`: sources ROS 2 and runs the hover node after the user confirms SITL prerequisites.
 - `run_figure8.sh`: sources ROS 2 and runs the figure-eight node after the user confirms SITL prerequisites.
-- `run_trajectory.sh`: runs the unified multi-trajectory node with a trajectory argument.
+- `run_trajectory.sh`: runs the unified multi-trajectory node with trajectory and controller-mode arguments.
 - `analyze_all.sh`: runs the offline hover, figure-eight, and summary analysis scripts.
 
 These scripts do not start PX4, Gazebo, or Micro XRCE-DDS Agent automatically.
@@ -40,6 +40,7 @@ Offline Python scripts:
 - `analyze_offboard_hover.py`: parses `logs/offboard_hover_first_success.csv`.
 - `analyze_figure8.py`: parses `logs/figure8_first_success.csv`.
 - `analyze_trajectory_suite.py`: scans future `offboard_trajectory_*.csv` logs and summarizes metrics by `trajectory_type`.
+- `compare_control_modes.py`: compares paired baseline/feedforward/smooth logs by trajectory type.
 - `generate_summary_visuals.py`: reads existing metrics JSON files and generates project-level summaries.
 - `generate_gifs.py`: generates `media/figure8_tracking.gif` from the figure-eight CSV.
 
@@ -77,6 +78,7 @@ Project documentation:
 - `offboard_control.md`
 - `trajectory_tracking.md`
 - `visual_recording.md`
+- `control_improvement.md`
 - `reproducibility.md`
 - `project_structure.md`
 - safety and sim-to-real notes

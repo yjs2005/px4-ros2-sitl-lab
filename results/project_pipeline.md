@@ -8,8 +8,10 @@ flowchart LR
   D --> E["Offboard hover / figure-eight nodes"]
   D --> F["Unified multi-trajectory node"]
   F --> G["hover / line / square / circle / figure8 / z_step"]
+  F --> K["baseline / feedforward / smooth"]
   E --> H["CSV logs"]
   G --> H
+  K --> H
   H --> I["Analysis scripts"]
   I --> J["Figures / metrics / GIF / README"]
 ```

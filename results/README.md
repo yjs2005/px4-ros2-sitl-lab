@@ -45,6 +45,31 @@ Outputs:
 
 At the moment, committed measured results include hover and figure-eight. The new unified node also supports line, square, circle, and z_step, but those modes should not be reported as completed until their SITL CSV logs are captured and analyzed.
 
+## Control Mode Comparison
+
+The control comparison analyzer is for paired baseline vs improved experiments:
+
+```bash
+python analysis/compare_control_modes.py
+```
+
+It scans only logs that explicitly include `controller_mode` and match:
+
+- `logs/offboard_trajectory_*_baseline_*.csv`
+- `logs/offboard_trajectory_*_feedforward_*.csv`
+- `logs/offboard_trajectory_*_smooth_*.csv`
+
+Outputs:
+
+- `results/control_comparison_metrics.csv`
+- `results/control_comparison_metrics.json`
+- `results/control_comparison_metrics.md`
+- `results/figures/control_comparison_xy_rmse.png`
+- `results/figures/control_comparison_3d_rmse.png`
+- `results/figures/control_comparison_percent_improvement.png`
+
+If paired logs are missing, the script exits normally and reports that paired SITL experiments should be run first. Existing hover and figure-eight result files are not reclassified as feedforward or smooth results.
+
 ## Hover Analysis
 
 输入 CSV：

@@ -112,13 +112,15 @@ Example:
 
 ```bash
 cd ~/src/px4-ros2-sitl-lab
-bash scripts/run_trajectory.sh circle
+bash scripts/run_trajectory.sh circle baseline
+bash scripts/run_trajectory.sh circle feedforward
+bash scripts/run_trajectory.sh square smooth
 ```
 
 Equivalent direct ROS 2 command:
 
 ```bash
-ros2 run px4_offboard_lab offboard_trajectory --ros-args -p trajectory:=circle
+ros2 run px4_offboard_lab offboard_trajectory --ros-args -p trajectory:=circle -p controller_mode:=baseline
 ```
 
 Only hover and figure-eight have committed successful CSV results in this repository. Other modes are implemented and should be run deliberately in SITL before claiming results.
@@ -132,6 +134,7 @@ cd ~/src/px4-ros2-sitl-lab
 python3 analysis/analyze_offboard_hover.py
 python3 analysis/analyze_figure8.py
 python3 analysis/analyze_trajectory_suite.py
+python3 analysis/compare_control_modes.py
 python3 analysis/generate_summary_visuals.py
 python3 analysis/generate_gifs.py
 ```
@@ -148,6 +151,7 @@ Primary outputs:
 - `results/offboard_hover_metrics.md`
 - `results/figure8_metrics.md`
 - `results/trajectory_suite_metrics.md`
+- `results/control_comparison_metrics.md`
 - `results/summary_metrics.md`
 - `results/figures/metrics_summary.png`
 - `media/figure8_tracking.gif`

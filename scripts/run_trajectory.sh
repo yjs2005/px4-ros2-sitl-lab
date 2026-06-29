@@ -2,15 +2,22 @@
 set -euo pipefail
 
 trajectory="${1:-}"
+controller_mode="${2:-baseline}"
+
 if [[ -z "${trajectory}" ]]; then
   cat <<'MSG'
 Usage:
-  bash scripts/run_trajectory.sh hover
-  bash scripts/run_trajectory.sh line
-  bash scripts/run_trajectory.sh square
-  bash scripts/run_trajectory.sh circle
-  bash scripts/run_trajectory.sh figure8
-  bash scripts/run_trajectory.sh z_step
+  bash scripts/run_trajectory.sh hover baseline
+  bash scripts/run_trajectory.sh line baseline
+  bash scripts/run_trajectory.sh line smooth
+  bash scripts/run_trajectory.sh square baseline
+  bash scripts/run_trajectory.sh square smooth
+  bash scripts/run_trajectory.sh circle baseline
+  bash scripts/run_trajectory.sh circle feedforward
+  bash scripts/run_trajectory.sh figure8 baseline
+  bash scripts/run_trajectory.sh figure8 feedforward
+  bash scripts/run_trajectory.sh z_step baseline
+  bash scripts/run_trajectory.sh z_step smooth
 MSG
   exit 1
 fi
@@ -25,10 +32,21 @@ case "${trajectory}" in
     ;;
 esac
 
+case "${controller_mode}" in
+  baseline|feedforward|smooth)
+    ;;
+  *)
+    echo "Unsupported controller mode: ${controller_mode}"
+    echo "Choose one of: baseline, feedforward, smooth"
+    exit 1
+    ;;
+esac
+
 cat <<MSG
-PX4 Offboard multi-trajectory runner (SITL only).
+PX4 Offboard trajectory runner (SITL only).
 
 Selected trajectory: ${trajectory}
+Selected controller mode: ${controller_mode}
 
 Before continuing, confirm:
   1. QGroundControl is open, or SITL preflight checks are otherwise resolved.
@@ -61,4 +79,6 @@ if ! ros2 pkg list | grep -qx "px4_offboard_lab"; then
   exit 1
 fi
 
-ros2 run px4_offboard_lab offboard_trajectory --ros-args -p trajectory:="${trajectory}"
+ros2 run px4_offboard_lab offboard_trajectory --ros-args \
+  -p trajectory:="${trajectory}" \
+  -p controller_mode:="${controller_mode}"

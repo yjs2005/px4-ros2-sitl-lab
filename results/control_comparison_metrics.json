@@ -1,0 +1,13 @@
+{
+  "source_patterns": [
+    "logs/offboard_trajectory_*_baseline_*.csv",
+    "logs/offboard_trajectory_*_feedforward_*.csv",
+    "logs/offboard_trajectory_*_smooth_*.csv"
+  ],
+  "tracking_stage_inference": "rows where stage is tracking/trajectory/figure8/line/circle/square/z_step, or where stage equals trajectory_type",
+  "discovered_files": [],
+  "skipped_files": {},
+  "metrics_by_trajectory_and_mode": {},
+  "paired_improvements": [],
+  "message": "No paired baseline/improved logs found yet. Run paired SITL experiments first."
+}

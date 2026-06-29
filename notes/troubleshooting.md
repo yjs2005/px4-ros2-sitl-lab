@@ -407,3 +407,38 @@ hover line square circle figure8 z_step
 
 - It scans `logs/trajectory_*.csv`, `logs/offboard_trajectory_*.csv`, and `logs/figure8_first_success.csv`.
 - Check that future logs include `trajectory_type`, `stage`, target columns, vehicle position, and velocity.
+
+## Baseline vs Improved Control Comparison Notes
+
+### No Paired Baseline / Improved Logs
+
+- `analysis/compare_control_modes.py` intentionally ignores old logs without a `controller_mode` column.
+- If no paired logs exist, it reports:
+
+```text
+No paired baseline/improved logs found yet. Run paired SITL experiments first.
+```
+
+- This is expected until matching runs such as `circle baseline` and `circle feedforward` have both been completed.
+
+### Do Not Claim Improvement Before Pairing
+
+- Do not write that feedforward or smooth reduced error until paired SITL logs exist and the comparison script computes improvement percentages.
+- Current validated results remain hover and figure-eight tracking.
+
+### Baseline Still Uses PX4 Controllers
+
+- `baseline` means ROS 2 publishes position-only setpoints.
+- PX4 internal position, velocity, attitude, and rate controllers are still active.
+- This project does not patch PX4 control code.
+
+### Feedforward Velocity Looks Ignored
+
+- Keep `OffboardControlMode.position=True`; velocity fields in `TrajectorySetpoint` are intended as feedforward setpoints alongside position setpoints.
+- Confirm the CSV contains `target_vx`, `target_vy`, and `target_vz`.
+- Compare only after running matching baseline and feedforward logs under similar SITL conditions.
+
+### Smooth Mode Does Not Make Square Perfectly Round
+
+- Current `smooth` square mode uses corner slowdown through smoothstep timing.
+- It is intended to reduce abrupt target velocity direction changes, not to replace the square with a circular path.

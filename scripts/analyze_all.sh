@@ -14,6 +14,8 @@ echo
 python3 analysis/generate_summary_visuals.py
 echo
 python3 analysis/analyze_trajectory_suite.py
+echo
+python3 analysis/compare_control_modes.py
 
 cat <<'MSG'
 
@@ -31,6 +33,12 @@ Generated result files:
   results/trajectory_suite_metrics.json
   results/trajectory_suite_metrics.csv
   results/figures/trajectory_suite_metrics.png
+  results/control_comparison_metrics.md
+  results/control_comparison_metrics.json
+  results/control_comparison_metrics.csv
+  results/figures/control_comparison_xy_rmse.png
+  results/figures/control_comparison_3d_rmse.png
+  results/figures/control_comparison_percent_improvement.png
 
 GIF generation is separate:
   python3 analysis/generate_gifs.py

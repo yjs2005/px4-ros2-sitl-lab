@@ -1,0 +1,1 @@
+trajectory_type,controller_mode,samples,duration_s,xy_rmse_m,xy_mae_m,max_xy_error_m,z_rmse_m,z_mae_m,position_rmse_m,max_position_error_m,final_position_error_before_landing_m,max_speed_mps,source_files

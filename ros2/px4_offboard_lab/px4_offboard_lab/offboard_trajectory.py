@@ -3,9 +3,10 @@
 
 WARNING: simulation-only, not for real aircraft.
 
-This node is intended for PX4 SITL with Gazebo and Micro XRCE-DDS Agent.
-It publishes position setpoints in PX4 local NED coordinates. Negative z
-means upward. Do not connect this node to a real vehicle.
+PX4 still runs its internal position, velocity, and attitude controllers.
+This node only changes the ROS 2 Offboard setpoint generation strategy:
+baseline position-only setpoints, position plus velocity feedforward, or
+smooth setpoints for trajectories with corners or step changes.
 """
 
 from __future__ import annotations
@@ -14,6 +15,7 @@ import argparse
 import csv
 import math
 import sys
+from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 from typing import Iterable
@@ -33,7 +35,14 @@ from rclpy.qos import ReliabilityPolicy
 
 
 SUPPORTED_TRAJECTORIES = {"hover", "line", "square", "circle", "figure8", "z_step"}
+SUPPORTED_CONTROLLER_MODES = {"baseline", "feedforward", "smooth"}
 NAN_VECTOR = [math.nan, math.nan, math.nan]
+
+
+@dataclass(frozen=True)
+class Setpoint:
+    position: tuple[float, float, float]
+    velocity: tuple[float, float, float]
 
 
 class OffboardTrajectory(Node):
@@ -43,6 +52,7 @@ class OffboardTrajectory(Node):
         super().__init__("offboard_trajectory")
 
         self.declare_parameter("trajectory", "figure8")
+        self.declare_parameter("controller_mode", "baseline")
         self.declare_parameter("altitude", -2.0)
         self.declare_parameter("rate_hz", 20.0)
         self.declare_parameter("duration_s", 40.0)
@@ -50,6 +60,9 @@ class OffboardTrajectory(Node):
         self.declare_parameter("amplitude_y", 0.8)
         self.declare_parameter("radius", 1.0)
         self.declare_parameter("square_size", 1.5)
+        self.declare_parameter("max_speed", 1.0)
+        self.declare_parameter("corner_slowdown", True)
+        self.declare_parameter("smooth_time_scaling", True)
         self.declare_parameter("warmup_s", 5.0)
         self.declare_parameter("pretrack_hover_s", 3.0)
         self.declare_parameter("landing_s", 8.0)
@@ -66,6 +79,13 @@ class OffboardTrajectory(Node):
                 f"Choose one of: {', '.join(sorted(SUPPORTED_TRAJECTORIES))}"
             )
 
+        self.controller_mode = str(self.get_parameter("controller_mode").value).strip().lower()
+        if self.controller_mode not in SUPPORTED_CONTROLLER_MODES:
+            raise ValueError(
+                f"Unsupported controller_mode '{self.controller_mode}'. "
+                f"Choose one of: {', '.join(sorted(SUPPORTED_CONTROLLER_MODES))}"
+            )
+
         self.altitude = float(self.get_parameter("altitude").value)
         self.rate_hz = max(10.0, float(self.get_parameter("rate_hz").value))
         self.duration_s = max(1.0, float(self.get_parameter("duration_s").value))
@@ -73,6 +93,9 @@ class OffboardTrajectory(Node):
         self.amplitude_y = float(self.get_parameter("amplitude_y").value)
         self.radius = float(self.get_parameter("radius").value)
         self.square_size = float(self.get_parameter("square_size").value)
+        self.max_speed = max(0.05, float(self.get_parameter("max_speed").value))
+        self.corner_slowdown = bool(self.get_parameter("corner_slowdown").value)
+        self.smooth_time_scaling = bool(self.get_parameter("smooth_time_scaling").value)
         self.warmup_s = max(0.5, float(self.get_parameter("warmup_s").value))
         self.pretrack_hover_s = max(0.0, float(self.get_parameter("pretrack_hover_s").value))
         self.landing_s = max(1.0, float(self.get_parameter("landing_s").value))
@@ -123,7 +146,7 @@ class OffboardTrajectory(Node):
         self.tracking_started_ns: int | None = None
         self.last_state_print_ns = 0
         self.done = False
-        self.current_target = (0.0, 0.0, self.altitude)
+        self.current_setpoint = Setpoint((0.0, 0.0, self.altitude), tuple(NAN_VECTOR))
 
         self.csv_file = self._open_csv_log()
         self.csv_writer = csv.DictWriter(
@@ -141,8 +164,12 @@ class OffboardTrajectory(Node):
                 "target_x",
                 "target_y",
                 "target_z",
+                "target_vx",
+                "target_vy",
+                "target_vz",
                 "stage",
                 "trajectory_type",
+                "controller_mode",
                 "position_error_xy",
                 "position_error_3d",
             ],
@@ -153,8 +180,9 @@ class OffboardTrajectory(Node):
 
         self.get_logger().warning("SIMULATION ONLY: do not use this node on a real aircraft.")
         self.get_logger().info(
-            "Trajectory=%s altitude_ned=%.2f duration=%.1fs rate=%.1fHz; negative z is upward."
-            % (self.trajectory, self.altitude, self.duration_s, self.rate_hz)
+            "trajectory=%s controller_mode=%s altitude_ned=%.2f duration=%.1fs rate=%.1fHz; "
+            "negative z is upward."
+            % (self.trajectory, self.controller_mode, self.altitude, self.duration_s, self.rate_hz)
         )
         if self.dry_run:
             self.get_logger().warning("Dry-run is enabled: arm, OFFBOARD, and land commands are not sent.")
@@ -172,7 +200,7 @@ class OffboardTrajectory(Node):
         log_dir = Path(str(self.get_parameter("log_directory").value)).expanduser()
         log_dir.mkdir(parents=True, exist_ok=True)
         stamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        filename = f"offboard_trajectory_{self.trajectory}_{stamp}.csv"
+        filename = f"offboard_trajectory_{self.trajectory}_{self.controller_mode}_{stamp}.csv"
         return (log_dir / filename).open("w", newline="", encoding="utf-8")
 
     def vehicle_status_callback(self, msg: VehicleStatus) -> None:
@@ -189,12 +217,12 @@ class OffboardTrajectory(Node):
         now_ns = now.nanoseconds
         now_us = int(now_ns / 1000)
 
-        target = self.compute_target(now_ns)
-        self.current_target = target
+        setpoint = self.compute_setpoint(now_ns)
+        self.current_setpoint = setpoint
         self.publish_offboard_control_mode(now_us)
-        self.publish_trajectory_setpoint(now_us, target)
-        self.write_csv_row(now_us, target)
-        self.print_state_once_per_second(now_ns, target)
+        self.publish_trajectory_setpoint(now_us, setpoint)
+        self.write_csv_row(now_us, setpoint)
+        self.print_state_once_per_second(now_ns, setpoint)
         self.update_stage(now_ns)
         self.setpoint_count += 1
 
@@ -230,36 +258,41 @@ class OffboardTrajectory(Node):
                 self.change_stage("complete", now_ns)
                 self.request_shutdown()
 
-    def compute_target(self, now_ns: int) -> tuple[float, float, float]:
+    def compute_setpoint(self, now_ns: int) -> Setpoint:
         if self.stage != "tracking" or self.tracking_started_ns is None:
-            return (0.0, 0.0, self.altitude)
+            return self.apply_controller_mode(Setpoint((0.0, 0.0, self.altitude), (0.0, 0.0, 0.0)))
 
         t = min(self.tracking_elapsed_seconds(now_ns), self.duration_s)
-        phase = 2.0 * math.pi * t / self.duration_s
-
         if self.trajectory == "hover":
-            return (0.0, 0.0, self.altitude)
-        if self.trajectory == "line":
-            x = self.amplitude_x * math.sin(phase)
-            return (x, 0.0, self.altitude)
-        if self.trajectory == "square":
-            x, y = self.square_target(t)
-            return (x, y, self.altitude)
-        if self.trajectory == "circle":
-            x = self.radius * math.cos(phase)
-            y = self.radius * math.sin(phase)
-            return (x, y, self.altitude)
-        if self.trajectory == "figure8":
-            x = self.amplitude_x * math.sin(phase)
-            y = self.amplitude_y * math.sin(2.0 * phase)
-            return (x, y, self.altitude)
-        if self.trajectory == "z_step":
-            z = self.z_step_target(t)
-            return (0.0, 0.0, z)
+            setpoint = Setpoint((0.0, 0.0, self.altitude), (0.0, 0.0, 0.0))
+        elif self.trajectory == "line":
+            setpoint = self.line_setpoint(t)
+        elif self.trajectory == "square":
+            setpoint = self.square_setpoint(t)
+        elif self.trajectory == "circle":
+            setpoint = self.circle_setpoint(t)
+        elif self.trajectory == "figure8":
+            setpoint = self.figure8_setpoint(t)
+        elif self.trajectory == "z_step":
+            setpoint = self.z_step_setpoint(t)
+        else:
+            setpoint = Setpoint((0.0, 0.0, self.altitude), (0.0, 0.0, 0.0))
+        return self.apply_controller_mode(setpoint)
 
-        return (0.0, 0.0, self.altitude)
+    def line_setpoint(self, t: float) -> Setpoint:
+        if self.controller_mode == "smooth" and self.smooth_time_scaling:
+            u, du_dt = self.normalized_cycle_time(t)
+            s, ds_du = self.smoothstep(u)
+            phase = 2.0 * math.pi * s
+            phase_dot = 2.0 * math.pi * ds_du * du_dt
+        else:
+            phase = 2.0 * math.pi * t / self.duration_s
+            phase_dot = 2.0 * math.pi / self.duration_s
+        x = self.amplitude_x * math.sin(phase)
+        vx = self.amplitude_x * phase_dot * math.cos(phase)
+        return Setpoint((x, 0.0, self.altitude), self.clamp_velocity((vx, 0.0, 0.0)))
 
-    def square_target(self, t: float) -> tuple[float, float]:
+    def square_setpoint(self, t: float) -> Setpoint:
         half = self.square_size / 2.0
         corners = [
             (-half, -half),
@@ -270,27 +303,81 @@ class OffboardTrajectory(Node):
         ]
         segment_duration = self.duration_s / 4.0
         segment = min(3, int(t / segment_duration))
-        local_t = (t - segment * segment_duration) / segment_duration
+        local_t = max(0.0, min(1.0, (t - segment * segment_duration) / segment_duration))
+
+        if self.controller_mode == "smooth" and self.corner_slowdown:
+            s, ds_du = self.smoothstep(local_t)
+        else:
+            s, ds_du = local_t, 1.0
+
         x0, y0 = corners[segment]
         x1, y1 = corners[segment + 1]
-        x = x0 + (x1 - x0) * local_t
-        y = y0 + (y1 - y0) * local_t
-        return x, y
+        x = x0 + (x1 - x0) * s
+        y = y0 + (y1 - y0) * s
+        vx = (x1 - x0) * ds_du / segment_duration
+        vy = (y1 - y0) * ds_du / segment_duration
+        return Setpoint((x, y, self.altitude), self.clamp_velocity((vx, vy, 0.0)))
 
-    def z_step_target(self, t: float) -> float:
-        # NED z is negative upward. Smooth steps avoid abrupt setpoint jumps.
+    def circle_setpoint(self, t: float) -> Setpoint:
+        phase = 2.0 * math.pi * t / self.duration_s
+        omega = 2.0 * math.pi / self.duration_s
+        x = self.radius * math.cos(phase)
+        y = self.radius * math.sin(phase)
+        vx = -self.radius * omega * math.sin(phase)
+        vy = self.radius * omega * math.cos(phase)
+        return Setpoint((x, y, self.altitude), self.clamp_velocity((vx, vy, 0.0)))
+
+    def figure8_setpoint(self, t: float) -> Setpoint:
+        phase = 2.0 * math.pi * t / self.duration_s
+        omega = 2.0 * math.pi / self.duration_s
+        x = self.amplitude_x * math.sin(phase)
+        y = self.amplitude_y * math.sin(2.0 * phase)
+        vx = self.amplitude_x * omega * math.cos(phase)
+        vy = 2.0 * self.amplitude_y * omega * math.cos(2.0 * phase)
+        return Setpoint((x, y, self.altitude), self.clamp_velocity((vx, vy, 0.0)))
+
+    def z_step_setpoint(self, t: float) -> Setpoint:
         low = -1.5
         high = -2.5
         period = max(2.0, self.duration_s / 4.0)
         step = int(t / period) % 2
         target = high if step else low
         previous = low if step else high
+
+        if self.controller_mode == "baseline":
+            return Setpoint((0.0, 0.0, target), (0.0, 0.0, 0.0))
+
         blend_s = min(2.0, period / 3.0)
-        phase = (t % period) / blend_s
-        if phase >= 1.0:
-            return target
-        smooth = 0.5 - 0.5 * math.cos(math.pi * phase)
-        return previous + (target - previous) * smooth
+        u = (t % period) / blend_s
+        if u >= 1.0:
+            return Setpoint((0.0, 0.0, target), (0.0, 0.0, 0.0))
+        s, ds_du = self.smoothstep(u)
+        z = previous + (target - previous) * s
+        vz = (target - previous) * ds_du / blend_s
+        return Setpoint((0.0, 0.0, z), self.clamp_velocity((0.0, 0.0, vz)))
+
+    def apply_controller_mode(self, setpoint: Setpoint) -> Setpoint:
+        if self.controller_mode == "baseline":
+            return Setpoint(setpoint.position, tuple(NAN_VECTOR))
+        return Setpoint(setpoint.position, self.clamp_velocity(setpoint.velocity))
+
+    def clamp_velocity(self, velocity: tuple[float, float, float]) -> tuple[float, float, float]:
+        speed = math.sqrt(sum(component * component for component in velocity))
+        if speed <= self.max_speed or speed == 0.0:
+            return velocity
+        scale = self.max_speed / speed
+        return tuple(component * scale for component in velocity)
+
+    def normalized_cycle_time(self, t: float) -> tuple[float, float]:
+        u = max(0.0, min(1.0, t / self.duration_s))
+        return u, 1.0 / self.duration_s
+
+    @staticmethod
+    def smoothstep(u: float) -> tuple[float, float]:
+        u = max(0.0, min(1.0, u))
+        s = 10.0 * u**3 - 15.0 * u**4 + 6.0 * u**5
+        ds_du = 30.0 * u**2 - 60.0 * u**3 + 30.0 * u**4
+        return s, ds_du
 
     def stage_elapsed_seconds(self, now_ns: int) -> float:
         return (now_ns - self.stage_started_ns) / 1e9
@@ -317,11 +404,11 @@ class OffboardTrajectory(Node):
         msg.direct_actuator = False
         self.offboard_control_mode_publisher.publish(msg)
 
-    def publish_trajectory_setpoint(self, now_us: int, target: tuple[float, float, float]) -> None:
+    def publish_trajectory_setpoint(self, now_us: int, setpoint: Setpoint) -> None:
         msg = TrajectorySetpoint()
         msg.timestamp = now_us
-        msg.position = [target[0], target[1], target[2]]
-        msg.velocity = list(NAN_VECTOR)
+        msg.position = list(setpoint.position)
+        msg.velocity = list(setpoint.velocity)
         msg.acceleration = list(NAN_VECTOR)
         msg.jerk = list(NAN_VECTOR)
         msg.yaw = 0.0
@@ -369,7 +456,7 @@ class OffboardTrajectory(Node):
         msg.from_external = True
         self.vehicle_command_publisher.publish(msg)
 
-    def print_state_once_per_second(self, now_ns: int, target: tuple[float, float, float]) -> None:
+    def print_state_once_per_second(self, now_ns: int, setpoint: Setpoint) -> None:
         if now_ns - self.last_state_print_ns < 1_000_000_000:
             return
         self.last_state_print_ns = now_ns
@@ -377,11 +464,15 @@ class OffboardTrajectory(Node):
         arming_state = self.vehicle_status.arming_state if self.vehicle_status else -1
         nav_state = self.vehicle_status.nav_state if self.vehicle_status else -1
         position, _velocity = self.position_and_velocity()
+        target = setpoint.position
+        target_velocity = setpoint.velocity
         self.get_logger().info(
-            "trajectory=%s stage=%s arming_state=%s nav_state=%s "
-            "position_ned=(%.2f, %.2f, %.2f) target_ned=(%.2f, %.2f, %.2f)"
+            "trajectory=%s mode=%s stage=%s arming_state=%s nav_state=%s "
+            "position_ned=(%.2f, %.2f, %.2f) target_ned=(%.2f, %.2f, %.2f) "
+            "target_vel=(%.2f, %.2f, %.2f)"
             % (
                 self.trajectory,
+                self.controller_mode,
                 self.stage,
                 arming_state,
                 nav_state,
@@ -391,6 +482,9 @@ class OffboardTrajectory(Node):
                 target[0],
                 target[1],
                 target[2],
+                target_velocity[0],
+                target_velocity[1],
+                target_velocity[2],
             )
         )
 
@@ -410,8 +504,10 @@ class OffboardTrajectory(Node):
         position_error = math.sqrt(dx * dx + dy * dy + dz * dz)
         return xy_error, position_error
 
-    def write_csv_row(self, now_us: int, target: tuple[float, float, float]) -> None:
+    def write_csv_row(self, now_us: int, setpoint: Setpoint) -> None:
         position, velocity = self.position_and_velocity()
+        target = setpoint.position
+        target_velocity = setpoint.velocity
         arming_state = self.vehicle_status.arming_state if self.vehicle_status else -1
         nav_state = self.vehicle_status.nav_state if self.vehicle_status else -1
         xy_error, position_error = self.position_errors(position, target)
@@ -429,8 +525,12 @@ class OffboardTrajectory(Node):
                 "target_x": target[0],
                 "target_y": target[1],
                 "target_z": target[2],
+                "target_vx": target_velocity[0],
+                "target_vy": target_velocity[1],
+                "target_vz": target_velocity[2],
                 "stage": self.stage,
                 "trajectory_type": self.trajectory,
+                "controller_mode": self.controller_mode,
                 "position_error_xy": xy_error,
                 "position_error_3d": position_error,
             }

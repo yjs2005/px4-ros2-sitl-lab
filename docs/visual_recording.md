@@ -23,13 +23,28 @@ make px4_sitl gz_x500
 4. Run a trajectory node:
 
 ```bash
-bash scripts/run_trajectory.sh circle
+bash scripts/run_trajectory.sh circle baseline
 ```
 
 Supported trajectories:
 
 ```text
 hover line square circle figure8 z_step
+```
+
+Supported controller modes:
+
+```text
+baseline feedforward smooth
+```
+
+For paired comparison videos, record the same trajectory twice:
+
+```bash
+bash scripts/run_trajectory.sh circle baseline
+bash scripts/run_trajectory.sh circle feedforward
+bash scripts/run_trajectory.sh square baseline
+bash scripts/run_trajectory.sh square smooth
 ```
 
 ## Screenshots
@@ -68,7 +83,9 @@ media/videos/
 Suggested recordings:
 
 - `circle_gazebo_demo`
+- `circle_baseline_vs_feedforward`
 - `square_gazebo_demo`
+- `square_baseline_vs_smooth`
 - `figure8_gazebo_demo`
 
 Do not commit large raw videos by default. Keep large videos local, or use a documented release asset / Git LFS workflow if a video must be published.

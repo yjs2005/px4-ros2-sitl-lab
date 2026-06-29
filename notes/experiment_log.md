@@ -624,3 +624,54 @@ python3 analysis/analyze_trajectory_suite.py
 ### Conclusion
 
 - Project scope expanded to a multi-trajectory Offboard tracking framework while preserving existing validated results.
+
+## 2026-06-29 Baseline vs Improved Control Framework Extension
+
+### Environment
+
+- OS: Windows 11 host with WSL2 Ubuntu-22.04.
+- PX4: external checkout at `/home/yjs/src/PX4-Autopilot`.
+- ROS 2 workspace: `/home/yjs/px4_ros2_ws`.
+- Repository: `D:\42系保研准备\px4-ros2-sitl-lab`.
+
+### Goal
+
+- Extend the multi-trajectory Offboard framework into a baseline vs improved setpoint-generation comparison framework.
+- Do not modify PX4 internal flight control.
+- Do not rerun PX4, Gazebo, Micro XRCE-DDS Agent, or Offboard experiments.
+
+### Implementation
+
+- Extended `offboard_trajectory.py` with `controller_mode`.
+- Supported controller modes:
+  - `baseline`: position-only setpoint, velocity and acceleration NaN.
+  - `feedforward`: position plus analytic velocity feedforward, acceleration NaN.
+  - `smooth`: smooth time scaling / corner slowdown plus velocity feedforward.
+- Added target velocity fields and `controller_mode` to trajectory CSV logs.
+- Updated log naming to:
+
+```text
+offboard_trajectory_<trajectory>_<controller_mode>_<timestamp>.csv
+```
+
+- Added `analysis/compare_control_modes.py`.
+- Added `docs/control_improvement.md`.
+
+### Planned Paired Experiments
+
+- `circle baseline` vs `circle feedforward`
+- `figure8 baseline` vs `figure8 feedforward`
+- `square baseline` vs `square smooth`
+- `line baseline` vs `line smooth`
+- `z_step baseline` vs `z_step smooth`
+
+### Current Data Status
+
+- Existing measured and analyzed results remain hover and figure-eight.
+- No paired baseline/improved logs exist yet.
+- No error-reduction claim is made before paired SITL experiments are run and analyzed.
+
+### Conclusion
+
+- Baseline vs improved control comparison framework implemented at the ROS 2 Offboard setpoint layer.
+- PX4 internal controllers remain unchanged.
