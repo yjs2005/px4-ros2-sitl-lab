@@ -1,12 +1,12 @@
 # Offboard Control
 
-This document describes the Phase 3 Offboard hover node for PX4 SITL. It is simulation-only and must not be used on a real aircraft.
+This document describes the Offboard hover and figure-eight nodes for PX4 SITL. It is simulation-only and must not be used on a real aircraft.
 
 Phase 3 is now verified in PX4 SITL: ROS 2 Offboard hover reached the target NED hover point and completed the land/disarm sequence.
 
 ## Control Flow
 
-The `px4_offboard_lab` package provides a Python node named `offboard_hover`.
+The `px4_offboard_lab` package provides Python nodes named `offboard_hover` and `offboard_figure8`.
 
 The node:
 
@@ -154,4 +154,30 @@ The successful hover CSV has been analyzed for tracking error and visualization:
 
 The measured final hover z error was about `0.0124 m`, with final hover position error about `0.0327 m`.
 
-The `offboard_figure8` node is implemented for the next SITL-only trajectory experiment, but the figure-eight flight has not yet been run.
+Steady-state hover uses samples where `stage == "hover"` and `z <= -1.8`; the steady-state z RMSE is `0.0864 m`.
+
+## Figure-Eight Offboard Result
+
+The first figure-eight CSV has been analyzed:
+
+- `logs/figure8_first_success.csv`
+- `results/figure8_metrics.md`
+- `results/figures/figure8_xy_tracking.png`
+- `results/figures/figure8_z_tracking.png`
+- `results/figures/figure8_position_error.png`
+- `results/figures/figure8_velocity.png`
+
+The CSV contains `warmup`, `arming`, `offboard`, `pre_figure8_hover`, `figure8`, and `landing` stages. The analysis uses `stage == "figure8"` as the tracking-stage filter.
+
+The figure-eight node generated time-varying `target_x` and `target_y` setpoints while holding `target_z=-2.0`. In PX4 NED coordinates, negative `z` means upward.
+
+Tracking summary:
+
+- Figure-eight tracking duration: `40.000 s`
+- XY RMSE: `0.2003 m`
+- z RMSE: `0.1944 m`
+- 3D position RMSE: `0.2791 m`
+- Final position error before landing: `0.2492 m`
+- Max speed during tracking: `1.0536 m/s`
+
+Hover is fixed-point tracking; figure-eight is time-varying trajectory tracking. Both use ROS 2 Offboard setpoints through PX4 `/fmu/in/...` topics and remain SITL-only.

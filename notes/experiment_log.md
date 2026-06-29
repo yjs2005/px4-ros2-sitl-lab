@@ -429,3 +429,81 @@ px4_offboard_lab offboard_hover
 ### Next Step
 
 - Run the figure-eight experiment manually in SITL after QGroundControl/preflight readiness, Agent, PX4 SITL Gazebo, and ROS 2 workspace sourcing are confirmed.
+
+## 2026-06-29 Figure-Eight Offboard CSV Analysis
+
+### Environment
+
+- OS: Windows 11 host with WSL2 Ubuntu-22.04.
+- PX4: `PX4-Autopilot` at `/home/yjs/src/PX4-Autopilot`.
+- ROS 2: Humble.
+- ROS 2 workspace: `/home/yjs/px4_ros2_ws`.
+- Package: `px4_offboard_lab`.
+- Source CSV: `logs/figure8_first_success.csv`.
+
+### Goal
+
+- Analyze the first copied figure-eight Offboard CSV without rerunning PX4, Gazebo, Micro XRCE-DDS Agent, or any Offboard node.
+
+### Commands
+
+```bash
+python3 -m py_compile analysis/analyze_figure8.py
+python3 analysis/analyze_figure8.py
+```
+
+### Tracking-Stage Filter
+
+- Observed CSV stages: `warmup`, `arming`, `offboard`, `pre_figure8_hover`, `figure8`, `landing`.
+- The tracking-stage filter is `stage == "figure8"`.
+- The CSV contains a `landing` stage after figure-eight tracking.
+
+### Outputs
+
+- `analysis/analyze_figure8.py`
+- `results/figure8_metrics.json`
+- `results/figure8_metrics.md`
+- `results/figures/figure8_xy_tracking.png`
+- `results/figures/figure8_z_tracking.png`
+- `results/figures/figure8_position_error.png`
+- `results/figures/figure8_velocity.png`
+
+### Metrics Summary
+
+- Whole-run samples: `941`
+- Whole-run duration: `50.800 s`
+- Median logging/control frequency estimate: `20.00 Hz`
+- Figure-eight tracking samples: `758`
+- Figure-eight tracking duration: `40.000 s`
+- XY RMSE: `0.2003 m`
+- XY MAE: `0.1850 m`
+- Max XY error: `0.5037 m`
+- z RMSE: `0.1944 m`
+- z MAE: `0.0671 m`
+- Max absolute z error: `1.3490 m`
+- 3D position RMSE: `0.2791 m`
+- Max 3D position error: `1.3506 m`
+- Final position error before landing: `0.2492 m`
+- Max speed during tracking: `1.0536 m/s`
+
+### Observations
+
+- Figure-eight Offboard trajectory experiment completed in PX4 SITL for this CSV dataset.
+- The node generated time-varying `target_x` and `target_y` setpoints.
+- The vehicle entered the `figure8` tracking stage and the CSV ended with a `landing` stage.
+- PX4 local position uses NED coordinates; negative `z` means upward.
+- Hover tracking is fixed-point tracking, while figure-eight tracking is a moving setpoint trajectory.
+- Both experiments use ROS 2 Offboard setpoints through PX4 `/fmu/in/...` topics.
+
+### Issues
+
+- No live experiment was rerun during this analysis.
+- These results are simulation-only and not for real aircraft deployment.
+
+### Conclusion
+
+- Figure-eight CSV analysis completed and generated tracking metrics plus plots.
+
+### Next Step
+
+- Use the generated figures and metrics for comparison with later trajectory experiments, such as square or circular paths.

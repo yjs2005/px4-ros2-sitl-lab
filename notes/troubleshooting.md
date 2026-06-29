@@ -280,3 +280,29 @@ ros2 topic list | grep /fmu/out/vehicle_odometry
 ```
 
 - If the topic is missing, verify Agent/PX4 bridge connection before running the node.
+
+## Figure-Eight CSV Analysis Notes
+
+### Tracking Stage Name Differs
+
+- The first analyzed figure-eight CSV uses `stage == "figure8"` for the tracking window.
+- If a later node version writes `tracking` or `trajectory` instead, update or confirm the analysis filter before comparing metrics.
+- Do not mix setup, pre-hover, or landing rows into the tracking window unless intentionally measuring the full mission.
+
+### Large z Error At The Start Of Tracking
+
+- A large max absolute z error can occur if the vehicle enters the trajectory stage before fully settling at `z=-2.0`.
+- Inspect `results/figures/figure8_z_tracking.png` and `results/figures/figure8_position_error.png` before interpreting RMSE alone.
+- PX4 local NED uses negative `z` upward; a sign mistake can make altitude errors much larger.
+
+### Figure-Eight Tracking Looks Offset
+
+- Confirm that the plot compares actual `(x, y)` to target `(target_x, target_y)`, not to a fixed origin.
+- The figure-eight analysis plots East `y` on the horizontal axis and North `x` on the vertical axis to match the existing hover XY plot style.
+- Check whether the vehicle was already near `(0, 0, -2)` during `pre_figure8_hover` before the moving trajectory started.
+
+### Do Not Treat SITL Metrics As Real-Flight Validation
+
+- The figure-eight CSV records a PX4 SITL experiment only.
+- The analysis does not prove controller safety or robustness on real hardware.
+- Keep all trajectory changes simulation-only unless a separate real-aircraft safety process exists.

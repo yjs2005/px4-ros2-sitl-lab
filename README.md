@@ -2,7 +2,7 @@
 
 This repository is a research-oriented scaffold for quadrotor simulation trajectory tracking and log analysis based on PX4 SITL, Gazebo, and ROS 2 Offboard control.
 
-Current status: Phase 4 hover trajectory analysis completed; figure-eight Offboard node implemented and built, but figure-eight flight is not yet verified.
+Current status: Phase 4 hover trajectory analysis completed; the first figure-eight Offboard trajectory CSV has been analyzed from PX4 SITL.
 
 ## Project Goal
 
@@ -36,8 +36,8 @@ Build a reproducible PX4 SITL + Gazebo + ROS 2 Offboard workflow for simulated q
 3. Implement and verify ROS 2 Offboard takeoff and hover node in PX4 SITL
 4. Analyze hover tracking logs and generate figures
 5. Implement figure-eight Offboard trajectory node
-6. Record future trajectory logs with rosbag2 and PX4 ULog
-7. Visualize tracking errors for trajectory experiments
+6. Analyze first figure-eight trajectory CSV
+7. Record future trajectory logs with rosbag2 and PX4 ULog
 8. Organize README, results, and experiment notes
 
 ## Phase 3 Offboard Hover Node
@@ -174,9 +174,9 @@ To regenerate:
 python analysis/analyze_offboard_hover.py
 ```
 
-## Figure-Eight Node
+## Figure-Eight Experiment And Analysis
 
-The `offboard_figure8` node has been implemented and built in the existing `px4_offboard_lab` package. It has not been flown yet.
+The `offboard_figure8` node has been implemented and built in the existing `px4_offboard_lab` package. The first figure-eight CSV has been copied into this repository and analyzed offline.
 
 Default trajectory:
 
@@ -194,13 +194,52 @@ The node uses the same safety and Offboard flow:
 setpoint warm-up -> arm -> OFFBOARD -> pre-figure-eight hover -> figure-eight -> land
 ```
 
+Figure-eight source artifact:
+
+- [logs/figure8_first_success.csv](logs/figure8_first_success.csv)
+
+Figure-eight results:
+
+- [results/figure8_metrics.md](results/figure8_metrics.md)
+- [results/figure8_metrics.json](results/figure8_metrics.json)
+- [results/figures/figure8_xy_tracking.png](results/figures/figure8_xy_tracking.png)
+- [results/figures/figure8_z_tracking.png](results/figures/figure8_z_tracking.png)
+- [results/figures/figure8_position_error.png](results/figures/figure8_position_error.png)
+- [results/figures/figure8_velocity.png](results/figures/figure8_velocity.png)
+
+The CSV contains `warmup`, `arming`, `offboard`, `pre_figure8_hover`, `figure8`, and `landing` stages. Tracking metrics use `stage == "figure8"` as the figure-eight window.
+
+Summary from the figure-eight CSV:
+
+- Whole-run samples: `941`
+- Whole-run duration: `50.800 s`
+- Median frequency estimate: `20.00 Hz`
+- Figure-eight tracking samples: `758`
+- Figure-eight tracking duration: `40.000 s`
+- XY RMSE: `0.2003 m`
+- XY MAE: `0.1850 m`
+- Max XY error: `0.5037 m`
+- z RMSE: `0.1944 m`
+- z MAE: `0.0671 m`
+- Max absolute z error: `1.3490 m`
+- 3D position RMSE: `0.2791 m`
+- Max 3D position error: `1.3506 m`
+- Final position error before landing: `0.2492 m`
+- Max speed during tracking: `1.0536 m/s`
+
+This is time-varying trajectory tracking: the node generated changing `target_x` and `target_y` setpoints through PX4 `/fmu/in/...` topics. Hover is fixed-point tracking at `(0, 0, -2)`, while figure-eight tracking follows a moving XY setpoint at the same NED altitude convention.
+
 After building and starting the required SITL processes manually, run:
 
 ```bash
 bash scripts/run_figure8.sh
 ```
 
-Do not claim figure-eight flight success until the SITL experiment has actually been run and its CSV/ULog artifacts are analyzed.
+To regenerate the offline analysis:
+
+```bash
+python analysis/analyze_figure8.py
+```
 
 ## Safety
 

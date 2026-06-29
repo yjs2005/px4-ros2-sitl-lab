@@ -1,6 +1,6 @@
 # Trajectory Tracking
 
-This document records the Phase 4 trajectory-analysis workflow and the planned PX4 SITL figure-eight Offboard experiment. The scope is simulation-only and not for real aircraft deployment.
+This document records the Phase 4 trajectory-analysis workflow and the first PX4 SITL figure-eight Offboard analysis. The scope is simulation-only and not for real aircraft deployment.
 
 ## Hover Tracking
 
@@ -35,7 +35,11 @@ Generated outputs:
 
 ## Figure-Eight Tracking
 
-The `offboard_figure8` node is implemented for a later PX4 SITL experiment. It is not yet flight-verified.
+The `offboard_figure8` node has been implemented and the first copied CSV has been analyzed offline:
+
+```text
+logs/figure8_first_success.csv
+```
 
 The small figure-eight setpoint is:
 
@@ -55,6 +59,58 @@ Default parameters:
 
 The trajectory starts near `(0, 0, -2)` after warm-up and a short hover, then returns to a small bounded path suitable for the default Gazebo world.
 
+The analyzed CSV contains these stages:
+
+- `warmup`
+- `arming`
+- `offboard`
+- `pre_figure8_hover`
+- `figure8`
+- `landing`
+
+The tracking-stage filter is:
+
+```text
+stage == "figure8"
+```
+
+Generated outputs:
+
+- `results/figure8_metrics.json`
+- `results/figure8_metrics.md`
+- `results/figures/figure8_xy_tracking.png`
+- `results/figures/figure8_z_tracking.png`
+- `results/figures/figure8_position_error.png`
+- `results/figures/figure8_velocity.png`
+
+Summary:
+
+- Whole-run samples: `941`
+- Whole-run duration: `50.800 s`
+- Median logging/control frequency estimate: `20.00 Hz`
+- Figure-eight tracking samples: `758`
+- Figure-eight tracking duration: `40.000 s`
+- XY RMSE: `0.2003 m`
+- XY MAE: `0.1850 m`
+- Max XY error: `0.5037 m`
+- z RMSE: `0.1944 m`
+- z MAE: `0.0671 m`
+- Max absolute z error: `1.3490 m`
+- 3D position RMSE: `0.2791 m`
+- Max 3D position error: `1.3506 m`
+- Final position error before landing: `0.2492 m`
+- Max speed during tracking: `1.0536 m/s`
+
+The CSV shows time-varying `target_x` and `target_y` setpoints, a figure-eight tracking stage, and a landing stage. This supports recording the figure-eight Offboard trajectory experiment as completed in PX4 SITL for this dataset.
+
+## Hover vs Figure-Eight Tracking
+
+Hover tracking is fixed-point tracking: the target remains near PX4 NED `(0, 0, -2)`.
+
+Figure-eight tracking is time-varying trajectory tracking: `target_x` and `target_y` change continuously while `target_z` remains `-2.0`.
+
+Both experiments use ROS 2 Offboard setpoints through PX4 `/fmu/in/...` topics and observe vehicle state through `/fmu/out/...` topics.
+
 ## Offboard Warm-Up
 
 PX4 Offboard mode requires a continuous stream of setpoints before and during OFFBOARD mode. The nodes therefore use:
@@ -73,7 +129,7 @@ Switching to OFFBOARD before setpoints are streaming can cause mode rejection or
 - Keep trajectories small until tracking behavior is measured.
 - QGroundControl should be open, or SITL preflight checks should be otherwise resolved, before attempting Offboard takeoff.
 
-## Figure-Eight Metrics To Compute Later
+## Figure-Eight Metrics
 
 After a figure-eight run, save the node CSV and PX4 ULog. Recommended metrics:
 
@@ -86,4 +142,4 @@ After a figure-eight run, save the node CSV and PX4 ULog. Recommended metrics:
 - velocity plots
 - CSV and ULog artifact paths
 
-Do not claim figure-eight flight success until the SITL experiment has actually been run.
+Do not use these SITL results as evidence of real-aircraft readiness.
