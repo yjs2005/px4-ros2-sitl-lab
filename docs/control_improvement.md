@@ -74,6 +74,14 @@ bash scripts/run_trajectory.sh circle feedforward
 bash scripts/run_trajectory.sh square smooth
 ```
 
+Each command saves a CSV automatically to:
+
+```text
+logs/offboard_trajectory_<trajectory>_<controller_mode>_<YYYYMMDD_HHMMSS>.csv
+```
+
+The run script only starts the ROS 2 trajectory node. It does not start PX4, Gazebo, or Agent; it does not kill processes; it does not delete logs; and it does not modify PX4 parameters.
+
 ## Analysis
 
 After paired CSV logs are available, run:

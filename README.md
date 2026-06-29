@@ -125,6 +125,39 @@ bash scripts/run_trajectory.sh circle baseline
 
 可选轨迹：`hover`、`line`、`square`、`circle`、`figure8`、`z_step`。可选控制模式：`baseline`、`feedforward`、`smooth`。
 
+## CSV 自动保存与安全运行
+
+多轨迹实验只需要启动一次 PX4 SITL 和一次 Micro XRCE-DDS Agent。每次实验只运行一个 ROS 2 trajectory node。
+
+`scripts/run_trajectory.sh` 会把 `log_dir` 自动设置为项目根目录下的 `logs/`，节点退出时自动保存：
+
+```text
+logs/offboard_trajectory_<trajectory>_<controller_mode>_<timestamp>.csv
+```
+
+安全约束：
+
+- 不需要手动复制最新 CSV。
+- 不覆盖旧日志。
+- 不删除旧日志。
+- 不保存 `.ulg` 到 GitHub。
+- 脚本不 kill 进程，不 rm 文件，不 reset 工作区，不修改 PX4 参数。
+
+示例：
+
+```bash
+bash scripts/run_trajectory.sh circle baseline
+bash scripts/run_trajectory.sh circle feedforward
+bash scripts/run_trajectory.sh square smooth
+```
+
+对比分析：
+
+```bash
+python3 analysis/compare_control_modes.py
+bash scripts/analyze_all.sh
+```
+
 ## 如何截图和录屏
 
 截图、录屏和媒体文件管理见 [docs/visual_recording.md](docs/visual_recording.md)。

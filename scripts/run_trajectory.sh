@@ -1,42 +1,27 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-trajectory="${1:-}"
-controller_mode="${2:-baseline}"
+PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "${PROJECT_ROOT}"
 
-if [[ -z "${trajectory}" ]]; then
-  cat <<'MSG'
-Usage:
-  bash scripts/run_trajectory.sh hover baseline
-  bash scripts/run_trajectory.sh line baseline
-  bash scripts/run_trajectory.sh line smooth
-  bash scripts/run_trajectory.sh square baseline
-  bash scripts/run_trajectory.sh square smooth
-  bash scripts/run_trajectory.sh circle baseline
-  bash scripts/run_trajectory.sh circle feedforward
-  bash scripts/run_trajectory.sh figure8 baseline
-  bash scripts/run_trajectory.sh figure8 feedforward
-  bash scripts/run_trajectory.sh z_step baseline
-  bash scripts/run_trajectory.sh z_step smooth
-MSG
-  exit 1
-fi
+TRAJECTORY="${1:-circle}"
+CONTROLLER_MODE="${2:-baseline}"
 
-case "${trajectory}" in
+case "${TRAJECTORY}" in
   hover|line|square|circle|figure8|z_step)
     ;;
   *)
-    echo "Unsupported trajectory: ${trajectory}"
+    echo "Unsupported trajectory: ${TRAJECTORY}"
     echo "Choose one of: hover, line, square, circle, figure8, z_step"
     exit 1
     ;;
 esac
 
-case "${controller_mode}" in
+case "${CONTROLLER_MODE}" in
   baseline|feedforward|smooth)
     ;;
   *)
-    echo "Unsupported controller mode: ${controller_mode}"
+    echo "Unsupported controller mode: ${CONTROLLER_MODE}"
     echo "Choose one of: baseline, feedforward, smooth"
     exit 1
     ;;
@@ -45,40 +30,65 @@ esac
 cat <<MSG
 PX4 Offboard trajectory runner (SITL only).
 
-Selected trajectory: ${trajectory}
-Selected controller mode: ${controller_mode}
+Selected trajectory: ${TRAJECTORY}
+Selected controller mode: ${CONTROLLER_MODE}
+CSV log directory: ${PROJECT_ROOT}/logs
 
-Before continuing, confirm:
-  1. QGroundControl is open, or SITL preflight checks are otherwise resolved.
-  2. Terminal 1 is running:
+Prerequisites:
+  1. QGroundControl should be open.
+  2. MicroXRCEAgent should be running:
      MicroXRCEAgent udp4 -p 8888
-  3. Terminal 2 is running:
+  3. PX4 SITL should be running:
      cd ~/src/PX4-Autopilot && make px4_sitl gz_x500
-  4. This terminal can source the ROS 2 workspace.
 
-This script only sources ROS 2 and runs the offboard_trajectory node.
-It does not start PX4, does not start Gazebo, and does not kill processes.
+This script only runs the ROS 2 trajectory node.
+It does not start PX4, Gazebo, or Agent.
+It does not kill processes, delete files, reset anything, or modify PX4 parameters.
 MSG
 
-read -r -p "Continue only if this is PX4 SITL, not a real aircraft [y/N]: " answer
-case "${answer}" in
-  y|Y|yes|YES)
-    ;;
-  *)
-    echo "Aborted."
-    exit 1
-    ;;
-esac
+if [[ -f /opt/ros/humble/setup.bash ]]; then
+  source /opt/ros/humble/setup.bash
+fi
 
-source /opt/ros/humble/setup.bash
-source "${HOME}/px4_ros2_ws/install/setup.bash"
+if [[ -f "${HOME}/px4_ros2_ws/install/setup.bash" ]]; then
+  source "${HOME}/px4_ros2_ws/install/setup.bash"
+fi
 
-if ! ros2 pkg list | grep -qx "px4_offboard_lab"; then
-  echo "px4_offboard_lab is not built in ${HOME}/px4_ros2_ws."
-  echo "Run: cd ~/px4_ros2_ws && colcon build --symlink-install"
+if ! command -v ros2 >/dev/null 2>&1; then
+  echo "ros2 is not available. Source ROS 2 first, for example:"
+  echo "  source /opt/ros/humble/setup.bash"
   exit 1
 fi
 
+if ! ros2 pkg list | grep -qx "px4_offboard_lab"; then
+  echo "px4_offboard_lab is not available."
+  echo "Build it first:"
+  echo "  cd ~/px4_ros2_ws && colcon build --symlink-install"
+  exit 1
+fi
+
+if ! ros2 pkg executables px4_offboard_lab | awk '{print $2}' | grep -qx "offboard_trajectory"; then
+  echo "offboard_trajectory executable is not available."
+  echo "Build it first:"
+  echo "  cd ~/px4_ros2_ws && colcon build --symlink-install"
+  exit 1
+fi
+
+set +e
 ros2 run px4_offboard_lab offboard_trajectory --ros-args \
-  -p trajectory:="${trajectory}" \
-  -p controller_mode:="${controller_mode}"
+  -p trajectory:="${TRAJECTORY}" \
+  -p controller_mode:="${CONTROLLER_MODE}" \
+  -p log_dir:="${PROJECT_ROOT}/logs" \
+  -p save_csv:=true
+status=$?
+set -e
+
+echo
+echo "Latest CSV files:"
+if compgen -G "${PROJECT_ROOT}/logs/*.csv" >/dev/null; then
+  ls -lt "${PROJECT_ROOT}"/logs/*.csv | head -5
+else
+  echo "No CSV files found in ${PROJECT_ROOT}/logs"
+fi
+
+exit "${status}"

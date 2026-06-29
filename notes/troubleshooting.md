@@ -442,3 +442,29 @@ No paired baseline/improved logs found yet. Run paired SITL experiments first.
 
 - Current `smooth` square mode uses corner slowdown through smoothstep timing.
 - It is intended to reduce abrupt target velocity direction changes, not to replace the square with a circular path.
+
+## CSV Auto-Save Notes
+
+### CSV Was Not Created
+
+- Confirm `save_csv:=true` is passed to `offboard_trajectory`.
+- Confirm `log_dir` points to a writable directory, usually the project `logs/` directory.
+- The node should print one of:
+  - `CSV saved to: <absolute_path>`
+  - `CSV saving disabled`
+  - `No samples recorded`
+  - a concrete CSV error message
+
+### Do Not Manually Move Fresh Logs
+
+- `scripts/run_trajectory.sh` passes `-p log_dir:=<project-root>/logs`.
+- New trajectory logs are already written into the repository `logs/` directory.
+- Do not delete older CSV files; paired comparison needs matching baseline/improved logs.
+
+### Safe Runner Behavior
+
+- `scripts/run_trajectory.sh` only runs the ROS 2 node.
+- It does not start PX4, Gazebo, or Micro XRCE-DDS Agent.
+- It does not use `pkill`.
+- It does not delete logs or workspace files.
+- It does not modify PX4 parameters.

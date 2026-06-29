@@ -125,6 +125,36 @@ ros2 run px4_offboard_lab offboard_trajectory --ros-args -p trajectory:=circle -
 
 Only hover and figure-eight have committed successful CSV results in this repository. Other modes are implemented and should be run deliberately in SITL before claiming results.
 
+## CSV Auto-Save
+
+`scripts/run_trajectory.sh` automatically passes the project `logs/` directory to the node:
+
+```bash
+ros2 run px4_offboard_lab offboard_trajectory --ros-args \
+  -p trajectory:=circle \
+  -p controller_mode:=baseline \
+  -p log_dir:=<project-root>/logs \
+  -p save_csv:=true
+```
+
+Each run writes:
+
+```text
+logs/offboard_trajectory_<trajectory>_<controller_mode>_<YYYYMMDD_HHMMSS>.csv
+```
+
+The runner script does not start PX4, Gazebo, or Agent. It also does not kill processes, delete files, reset the workspace, or modify PX4 parameters.
+
+Recommended paired commands:
+
+```bash
+bash scripts/run_trajectory.sh circle baseline
+bash scripts/run_trajectory.sh circle feedforward
+bash scripts/run_trajectory.sh square smooth
+```
+
+After each run, the script prints the latest CSV files in `logs/`.
+
 ## Reproduce Analysis Only
 
 The committed CSV logs are enough to reproduce the metrics, figures, and GIF without running PX4 or Gazebo:

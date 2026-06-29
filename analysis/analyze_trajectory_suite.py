@@ -31,6 +31,14 @@ REQUIRED_COLUMNS = [
     "stage",
     "trajectory_type",
 ]
+OPTIONAL_COLUMNS = [
+    "target_vx",
+    "target_vy",
+    "target_vz",
+    "controller_mode",
+    "position_error_xy",
+    "position_error_3d",
+]
 
 TRACKING_STAGE_NAMES = {"tracking", "trajectory", "figure8"}
 
@@ -69,10 +77,30 @@ def load_csv(path: Path, logs_dir: Path) -> pd.DataFrame | None:
     if missing:
         return None
 
-    numeric_columns = [column for column in REQUIRED_COLUMNS if column not in {"stage", "trajectory_type"}]
+    for column in OPTIONAL_COLUMNS:
+        if column not in df.columns:
+            df[column] = math.nan if column != "controller_mode" else "unknown"
+
+    numeric_columns = [
+        column
+        for column in REQUIRED_COLUMNS + OPTIONAL_COLUMNS
+        if column not in {"stage", "trajectory_type", "controller_mode"}
+    ]
     for column in numeric_columns:
         df[column] = pd.to_numeric(df[column], errors="coerce")
-    df = df.dropna(subset=numeric_columns)
+    required_numeric = [
+        "timestamp",
+        "x",
+        "y",
+        "z",
+        "vx",
+        "vy",
+        "vz",
+        "target_x",
+        "target_y",
+        "target_z",
+    ]
+    df = df.dropna(subset=required_numeric)
     if df.empty:
         return None
 

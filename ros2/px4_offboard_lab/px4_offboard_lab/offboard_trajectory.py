@@ -18,7 +18,7 @@ import sys
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Iterable
+from typing import Iterable, TextIO
 
 import rclpy
 from px4_msgs.msg import OffboardControlMode
@@ -68,7 +68,8 @@ class OffboardTrajectory(Node):
         self.declare_parameter("landing_s", 8.0)
         self.declare_parameter("command_delay_s", 0.5)
         self.declare_parameter("dry_run", False)
-        self.declare_parameter("log_directory", str(Path.home() / "px4_ros2_ws" / "logs"))
+        self.declare_parameter("log_dir", "logs")
+        self.declare_parameter("save_csv", True)
         self.declare_parameter("vehicle_status_topic", "/fmu/out/vehicle_status")
         self.declare_parameter("vehicle_odometry_topic", "/fmu/out/vehicle_odometry")
 
@@ -101,6 +102,8 @@ class OffboardTrajectory(Node):
         self.landing_s = max(1.0, float(self.get_parameter("landing_s").value))
         self.command_delay_s = max(0.1, float(self.get_parameter("command_delay_s").value))
         self.dry_run = bool(self.get_parameter("dry_run").value) or dry_run_cli
+        self.log_dir = Path(str(self.get_parameter("log_dir").value)).expanduser()
+        self.save_csv = bool(self.get_parameter("save_csv").value)
 
         qos_profile = QoSProfile(
             reliability=ReliabilityPolicy.BEST_EFFORT,
@@ -147,34 +150,35 @@ class OffboardTrajectory(Node):
         self.last_state_print_ns = 0
         self.done = False
         self.current_setpoint = Setpoint((0.0, 0.0, self.altitude), tuple(NAN_VECTOR))
-
-        self.csv_file = self._open_csv_log()
-        self.csv_writer = csv.DictWriter(
-            self.csv_file,
-            fieldnames=[
-                "timestamp",
-                "arming_state",
-                "nav_state",
-                "x",
-                "y",
-                "z",
-                "vx",
-                "vy",
-                "vz",
-                "target_x",
-                "target_y",
-                "target_z",
-                "target_vx",
-                "target_vy",
-                "target_vz",
-                "stage",
-                "trajectory_type",
-                "controller_mode",
-                "position_error_xy",
-                "position_error_3d",
-            ],
-        )
-        self.csv_writer.writeheader()
+        self.samples_recorded = 0
+        self.csv_file: TextIO | None = None
+        self.csv_writer: csv.DictWriter | None = None
+        self.csv_path: Path | None = None
+        self.csv_error: str | None = None
+        self.csv_status_reported = False
+        self.csv_fieldnames = [
+            "timestamp",
+            "arming_state",
+            "nav_state",
+            "x",
+            "y",
+            "z",
+            "vx",
+            "vy",
+            "vz",
+            "target_x",
+            "target_y",
+            "target_z",
+            "target_vx",
+            "target_vy",
+            "target_vz",
+            "stage",
+            "trajectory_type",
+            "controller_mode",
+            "position_error_xy",
+            "position_error_3d",
+        ]
+        self.setup_csv_log()
 
         self.timer = self.create_timer(1.0 / self.rate_hz, self.timer_callback)
 
@@ -186,7 +190,8 @@ class OffboardTrajectory(Node):
         )
         if self.dry_run:
             self.get_logger().warning("Dry-run is enabled: arm, OFFBOARD, and land commands are not sent.")
-        self.get_logger().info(f"CSV log: {self.csv_file.name}")
+        if self.csv_path is not None:
+            self.get_logger().info(f"CSV log: {self.csv_path}")
 
     @staticmethod
     def _unique_topics(topics: Iterable[str]) -> list[str]:
@@ -196,12 +201,25 @@ class OffboardTrajectory(Node):
                 result.append(topic)
         return result
 
-    def _open_csv_log(self):
-        log_dir = Path(str(self.get_parameter("log_directory").value)).expanduser()
-        log_dir.mkdir(parents=True, exist_ok=True)
-        stamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        filename = f"offboard_trajectory_{self.trajectory}_{self.controller_mode}_{stamp}.csv"
-        return (log_dir / filename).open("w", newline="", encoding="utf-8")
+    def setup_csv_log(self) -> None:
+        if not self.save_csv:
+            self.get_logger().info("CSV saving disabled")
+            return
+
+        try:
+            self.log_dir.mkdir(parents=True, exist_ok=True)
+            stamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            filename = f"offboard_trajectory_{self.trajectory}_{self.controller_mode}_{stamp}.csv"
+            self.csv_path = (self.log_dir / filename).resolve()
+            self.csv_file = self.csv_path.open("w", newline="", encoding="utf-8")
+            self.csv_writer = csv.DictWriter(self.csv_file, fieldnames=self.csv_fieldnames)
+            self.csv_writer.writeheader()
+            self.csv_file.flush()
+        except Exception as exc:  # noqa: BLE001 - log and keep flight node behavior unchanged.
+            self.csv_error = f"CSV save setup failed: {exc}"
+            self.get_logger().error(self.csv_error)
+            self.csv_file = None
+            self.csv_writer = None
 
     def vehicle_status_callback(self, msg: VehicleStatus) -> None:
         self.vehicle_status = msg
@@ -505,49 +523,91 @@ class OffboardTrajectory(Node):
         return xy_error, position_error
 
     def write_csv_row(self, now_us: int, setpoint: Setpoint) -> None:
+        if self.csv_writer is None or self.csv_file is None:
+            return
+
         position, velocity = self.position_and_velocity()
         target = setpoint.position
         target_velocity = setpoint.velocity
         arming_state = self.vehicle_status.arming_state if self.vehicle_status else -1
         nav_state = self.vehicle_status.nav_state if self.vehicle_status else -1
         xy_error, position_error = self.position_errors(position, target)
-        self.csv_writer.writerow(
-            {
-                "timestamp": now_us,
-                "arming_state": arming_state,
-                "nav_state": nav_state,
-                "x": position[0],
-                "y": position[1],
-                "z": position[2],
-                "vx": velocity[0],
-                "vy": velocity[1],
-                "vz": velocity[2],
-                "target_x": target[0],
-                "target_y": target[1],
-                "target_z": target[2],
-                "target_vx": target_velocity[0],
-                "target_vy": target_velocity[1],
-                "target_vz": target_velocity[2],
-                "stage": self.stage,
-                "trajectory_type": self.trajectory,
-                "controller_mode": self.controller_mode,
-                "position_error_xy": xy_error,
-                "position_error_3d": position_error,
-            }
-        )
-        self.csv_file.flush()
+        try:
+            self.csv_writer.writerow(
+                {
+                    "timestamp": now_us,
+                    "arming_state": arming_state,
+                    "nav_state": nav_state,
+                    "x": position[0],
+                    "y": position[1],
+                    "z": position[2],
+                    "vx": velocity[0],
+                    "vy": velocity[1],
+                    "vz": velocity[2],
+                    "target_x": target[0],
+                    "target_y": target[1],
+                    "target_z": target[2],
+                    "target_vx": target_velocity[0],
+                    "target_vy": target_velocity[1],
+                    "target_vz": target_velocity[2],
+                    "stage": self.stage,
+                    "trajectory_type": self.trajectory,
+                    "controller_mode": self.controller_mode,
+                    "position_error_xy": xy_error,
+                    "position_error_3d": position_error,
+                }
+            )
+            self.csv_file.flush()
+            self.samples_recorded += 1
+        except Exception as exc:  # noqa: BLE001 - report and stop writing, do not touch old logs.
+            self.csv_error = f"CSV write failed: {exc}"
+            self.get_logger().error(self.csv_error)
+            try:
+                self.csv_file.flush()
+                self.csv_file.close()
+            except Exception:
+                pass
+            self.csv_file = None
+            self.csv_writer = None
 
     def request_shutdown(self) -> None:
         self.done = True
         self.get_logger().info("Offboard trajectory node sequence complete; shutting down.")
-        self.csv_file.flush()
-        self.csv_file.close()
+        self.finish_csv_log()
         rclpy.shutdown()
 
+    def finish_csv_log(self) -> None:
+        if self.csv_status_reported:
+            return
+        self.csv_status_reported = True
+
+        if not self.save_csv:
+            self.get_logger().info("CSV saving disabled")
+            return
+
+        if self.csv_file is not None:
+            try:
+                self.csv_file.flush()
+                self.csv_file.close()
+            except Exception as exc:  # noqa: BLE001
+                self.csv_error = f"CSV close failed: {exc}"
+
+        if self.csv_error:
+            self.get_logger().error(self.csv_error)
+            return
+
+        if self.samples_recorded <= 0:
+            self.get_logger().warning("No samples recorded")
+            return
+
+        if self.csv_path is None:
+            self.get_logger().error("CSV save failed: no output path was created")
+            return
+
+        self.get_logger().info(f"CSV saved to: {self.csv_path.resolve()}")
+
     def destroy_node(self) -> bool:
-        if hasattr(self, "csv_file") and not self.csv_file.closed:
-            self.csv_file.flush()
-            self.csv_file.close()
+        self.finish_csv_log()
         return super().destroy_node()
 
 

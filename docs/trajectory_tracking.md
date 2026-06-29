@@ -125,6 +125,15 @@ Generated logs are named:
 offboard_trajectory_<trajectory>_<controller_mode>_<timestamp>.csv
 ```
 
+When launched through `scripts/run_trajectory.sh`, CSV logs are saved under the project `logs/` directory automatically. Existing CSV files are not overwritten or deleted.
+
+The node prints one of these exit messages:
+
+- `CSV saved to: <absolute_path>`
+- `CSV saving disabled`
+- `No samples recorded`
+- a concrete CSV error message if saving failed
+
 ## Controller Modes
 
 The unified node supports:

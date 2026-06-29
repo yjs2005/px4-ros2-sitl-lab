@@ -30,9 +30,14 @@ REQUIRED_COLUMNS = [
     "target_x",
     "target_y",
     "target_z",
+    "target_vx",
+    "target_vy",
+    "target_vz",
     "stage",
     "trajectory_type",
     "controller_mode",
+    "position_error_xy",
+    "position_error_3d",
 ]
 
 
@@ -60,7 +65,19 @@ def load_log(path: Path, repo_root: Path) -> tuple[pd.DataFrame | None, str | No
     numeric_columns = [column for column in REQUIRED_COLUMNS if column not in {"stage", "trajectory_type", "controller_mode"}]
     for column in numeric_columns:
         df[column] = pd.to_numeric(df[column], errors="coerce")
-    df = df.dropna(subset=numeric_columns)
+    required_numeric = [
+        "timestamp",
+        "x",
+        "y",
+        "z",
+        "vx",
+        "vy",
+        "vz",
+        "target_x",
+        "target_y",
+        "target_z",
+    ]
+    df = df.dropna(subset=required_numeric)
     if df.empty:
         return None, "no numeric samples"
 
