@@ -1,47 +1,48 @@
 # Trajectory Tracking
 
-This document records the Phase 4 trajectory-analysis workflow and the first PX4 SITL figure-eight Offboard analysis. The scope is simulation-only and not for real aircraft deployment.
+This document records the trajectory-tracking workflow for the PX4 ROS 2 SITL lab. The scope is simulation-only and not for real aircraft deployment.
 
-## Hover Tracking
+## Coordinate Convention
 
-The first successful hover experiment used the target:
+PX4 local position uses NED coordinates:
+
+- `x`: North
+- `y`: East
+- `z`: Down
+
+Negative `z` means upward. A target of `z=-2.0` means about 2 meters above the local origin.
+
+## Current Verified Experiments
+
+### Hover
+
+The first successful hover experiment tracks:
 
 ```text
 PX4 NED: x = 0.0, y = 0.0, z = -2.0
 ```
 
-PX4 local position uses NED coordinates: North, East, Down. Negative `z` is upward, so `z=-2.0` means about 2 meters above the local origin.
-
-The hover CSV is:
+Input CSV:
 
 ```text
 logs/offboard_hover_first_success.csv
 ```
 
-The analysis script computes whole-run and hover-stage metrics, then creates tracking plots:
+Analysis:
 
 ```bash
 python analysis/analyze_offboard_hover.py
 ```
 
-Generated outputs:
+Key steady-state result:
 
-- `results/offboard_hover_metrics.json`
-- `results/offboard_hover_metrics.md`
-- `results/figures/offboard_hover_z.png`
-- `results/figures/offboard_hover_xy.png`
-- `results/figures/offboard_hover_ned_position.png`
-- `results/figures/offboard_hover_velocity.png`
+- z RMSE: `0.0864 m`
+- XY RMSE: `0.0313 m`
+- final position error: `0.0327 m`
 
-## Figure-Eight Tracking
+### Figure-Eight
 
-The `offboard_figure8` node has been implemented and the first copied CSV has been analyzed offline:
-
-```text
-logs/figure8_first_success.csv
-```
-
-The small figure-eight setpoint is:
+The first successful figure-eight experiment uses:
 
 ```text
 x(t) = A * sin(omega * t)
@@ -49,86 +50,147 @@ y(t) = B * sin(2 * omega * t)
 z(t) = -2.0
 ```
 
-Default parameters:
+Input CSV:
 
-- `A = 1.0 m`
-- `B = 0.6 m`
-- `z = -2.0 m`
-- duration about `40 s`
-- publish rate `20 Hz`
+```text
+logs/figure8_first_success.csv
+```
 
-The trajectory starts near `(0, 0, -2)` after warm-up and a short hover, then returns to a small bounded path suitable for the default Gazebo world.
+Analysis:
 
-The analyzed CSV contains these stages:
+```bash
+python analysis/analyze_figure8.py
+```
 
-- `warmup`
-- `arming`
-- `offboard`
-- `pre_figure8_hover`
-- `figure8`
-- `landing`
-
-The tracking-stage filter is:
+Tracking-stage filter:
 
 ```text
 stage == "figure8"
 ```
 
-Generated outputs:
+Key result:
 
-- `results/figure8_metrics.json`
-- `results/figure8_metrics.md`
-- `results/figures/figure8_xy_tracking.png`
-- `results/figures/figure8_z_tracking.png`
-- `results/figures/figure8_position_error.png`
-- `results/figures/figure8_velocity.png`
-- `media/figure8_tracking.gif`
-
-Summary:
-
-- Whole-run samples: `941`
-- Whole-run duration: `50.800 s`
-- Median logging/control frequency estimate: `20.00 Hz`
-- Figure-eight tracking samples: `758`
-- Figure-eight tracking duration: `40.000 s`
+- tracking duration: `40.000 s`
 - XY RMSE: `0.2003 m`
-- XY MAE: `0.1850 m`
-- Max XY error: `0.5037 m`
 - z RMSE: `0.1944 m`
-- z MAE: `0.0671 m`
-- Max absolute z error: `1.3490 m`
 - 3D position RMSE: `0.2791 m`
-- Max 3D position error: `1.3506 m`
-- Final position error before landing: `0.2492 m`
-- Max speed during tracking: `1.0536 m/s`
 
-The CSV shows time-varying `target_x` and `target_y` setpoints, a figure-eight tracking stage, and a landing stage. This supports recording the figure-eight Offboard trajectory experiment as completed in PX4 SITL for this dataset.
+## Unified Multi-Trajectory Node
 
-## Hover vs Figure-Eight Tracking
+The new `offboard_trajectory` node is a parameterized trajectory runner for later SITL experiments.
 
-Hover tracking is fixed-point tracking: the target remains near PX4 NED `(0, 0, -2)`.
+Supported `trajectory` parameter values:
 
-Figure-eight tracking is time-varying trajectory tracking: `target_x` and `target_y` change continuously while `target_z` remains `-2.0`.
+- `hover`
+- `line`
+- `square`
+- `circle`
+- `figure8`
+- `z_step`
 
-Both experiments use ROS 2 Offboard setpoints through PX4 `/fmu/in/...` topics and observe vehicle state through `/fmu/out/...` topics.
+Run example:
 
-Project-level summaries are available at:
-
-- `results/summary_metrics.md`
-- `results/summary_metrics.json`
-- `results/summary_metrics.csv`
-- `results/figures/metrics_summary.png`
-- `results/project_pipeline.md`
-
-## Offboard Warm-Up
-
-PX4 Offboard mode requires a continuous stream of setpoints before and during OFFBOARD mode. The nodes therefore use:
-
-```text
-setpoint warm-up -> arm -> OFFBOARD -> trajectory -> land
+```bash
+ros2 run px4_offboard_lab offboard_trajectory --ros-args -p trajectory:=circle
 ```
 
-Switching to OFFBOARD before setpoints are streaming can cause mode rejection or failsafe.
+Or through the helper:
+
+```bash
+bash scripts/run_trajectory.sh circle
+```
+
+The node uses this common Offboard sequence:
+
+```text
+setpoint warm-up -> arm -> OFFBOARD -> pretrack hover -> tracking -> land -> finish
+```
+
+All modes publish setpoints at 20 Hz by default and log CSV rows with:
+
+- vehicle state
+- target setpoint
+- stage
+- trajectory type
+- XY position error
+- 3D position error
+
+Generated logs are named:
+
+```text
+offboard_trajectory_<trajectory>_<timestamp>.csv
+```
+
+## Trajectory Definitions
+
+### `hover`
+
+```text
+x = 0
+y = 0
+z = altitude
+```
+
+### `line`
+
+Smooth x-axis sweep:
+
+```text
+x = amplitude_x * sin(omega * t)
+y = 0
+z = altitude
+```
+
+### `square`
+
+Linear interpolation around four corners with side length `square_size`.
+
+### `circle`
+
+```text
+x = radius * cos(omega * t)
+y = radius * sin(omega * t)
+z = altitude
+```
+
+### `figure8`
+
+```text
+x = amplitude_x * sin(omega * t)
+y = amplitude_y * sin(2 * omega * t)
+z = altitude
+```
+
+### `z_step`
+
+```text
+x = 0
+y = 0
+z switches smoothly between -1.5 and -2.5
+```
+
+## Trajectory Suite Analysis
+
+Future line/square/circle/z_step runs can be summarized together:
+
+```bash
+python analysis/analyze_trajectory_suite.py
+```
+
+The suite analyzer scans:
+
+- `logs/trajectory_*.csv`
+- `logs/offboard_trajectory_*.csv`
+- `logs/figure8_first_success.csv`
+
+Outputs:
+
+- `results/trajectory_suite_metrics.csv`
+- `results/trajectory_suite_metrics.json`
+- `results/trajectory_suite_metrics.md`
+- `results/figures/trajectory_suite_metrics.png`
+
+The existing hover and figure-eight analysis files are not overwritten.
 
 ## Safety Constraints
 
@@ -137,18 +199,3 @@ Switching to OFFBOARD before setpoints are streaming can cause mode rejection or
 - Keep setpoint rate at or above 10 Hz; this package defaults to 20 Hz.
 - Keep trajectories small until tracking behavior is measured.
 - QGroundControl should be open, or SITL preflight checks should be otherwise resolved, before attempting Offboard takeoff.
-
-## Figure-Eight Metrics
-
-After a figure-eight run, save the node CSV and PX4 ULog. Recommended metrics:
-
-- XY RMSE
-- z RMSE
-- max position error
-- max speed
-- tracking plots for x/y/z position
-- XY trajectory plot against target
-- velocity plots
-- CSV and ULog artifact paths
-
-Do not use these SITL results as evidence of real-aircraft readiness.

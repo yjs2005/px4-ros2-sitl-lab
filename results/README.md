@@ -22,6 +22,29 @@ python analysis/generate_summary_visuals.py
 
 ![Metrics summary](figures/metrics_summary.png)
 
+## Trajectory Suite Analysis
+
+The suite analyzer is intended for comparing multiple trajectory modes after future runs:
+
+```bash
+python analysis/analyze_trajectory_suite.py
+```
+
+It scans:
+
+- `logs/trajectory_*.csv`
+- `logs/offboard_trajectory_*.csv`
+- `logs/figure8_first_success.csv`
+
+Outputs:
+
+- `results/trajectory_suite_metrics.csv`
+- `results/trajectory_suite_metrics.json`
+- `results/trajectory_suite_metrics.md`
+- `results/figures/trajectory_suite_metrics.png`
+
+At the moment, committed measured results include hover and figure-eight. The new unified node also supports line, square, circle, and z_step, but those modes should not be reported as completed until their SITL CSV logs are captured and analyzed.
+
 ## Hover Analysis
 
 输入 CSV：

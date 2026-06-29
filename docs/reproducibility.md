@@ -56,6 +56,7 @@ Expected executables:
 ```text
 px4_offboard_lab offboard_hover
 px4_offboard_lab offboard_figure8
+px4_offboard_lab offboard_trajectory
 ```
 
 ## Run Hover In SITL
@@ -99,6 +100,29 @@ z(t) = -2.0
 
 PX4 local position is NED, so negative `z` means upward.
 
+## Run A Multi-Trajectory Experiment In SITL
+
+The unified node supports:
+
+```text
+hover line square circle figure8 z_step
+```
+
+Example:
+
+```bash
+cd ~/src/px4-ros2-sitl-lab
+bash scripts/run_trajectory.sh circle
+```
+
+Equivalent direct ROS 2 command:
+
+```bash
+ros2 run px4_offboard_lab offboard_trajectory --ros-args -p trajectory:=circle
+```
+
+Only hover and figure-eight have committed successful CSV results in this repository. Other modes are implemented and should be run deliberately in SITL before claiming results.
+
 ## Reproduce Analysis Only
 
 The committed CSV logs are enough to reproduce the metrics, figures, and GIF without running PX4 or Gazebo:
@@ -107,6 +131,7 @@ The committed CSV logs are enough to reproduce the metrics, figures, and GIF wit
 cd ~/src/px4-ros2-sitl-lab
 python3 analysis/analyze_offboard_hover.py
 python3 analysis/analyze_figure8.py
+python3 analysis/analyze_trajectory_suite.py
 python3 analysis/generate_summary_visuals.py
 python3 analysis/generate_gifs.py
 ```
@@ -122,6 +147,7 @@ Primary outputs:
 
 - `results/offboard_hover_metrics.md`
 - `results/figure8_metrics.md`
+- `results/trajectory_suite_metrics.md`
 - `results/summary_metrics.md`
 - `results/figures/metrics_summary.png`
 - `media/figure8_tracking.gif`

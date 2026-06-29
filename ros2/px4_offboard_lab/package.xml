@@ -3,7 +3,7 @@
 <package format="3">
   <name>px4_offboard_lab</name>
   <version>0.1.0</version>
-  <description>Simulation-only PX4 ROS 2 Offboard hover examples for SITL.</description>
+  <description>Simulation-only PX4 ROS 2 Offboard trajectory tracking examples for SITL.</description>
   <maintainer email="yjs@example.com">yjs</maintainer>
   <license>MIT</license>
 

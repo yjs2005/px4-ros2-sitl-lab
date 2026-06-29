@@ -1,0 +1,2 @@
+trajectory_type,samples,duration_s,frequency_hz_median,xy_rmse_m,xy_mae_m,max_xy_error_m,z_rmse_m,z_mae_m,position_rmse_m,max_position_error_m,max_speed_mps,source_files
+figure8,758,39.9998,20.0,0.2003109347250834,0.18501934827846567,0.5037447048599721,0.1944224421583633,0.06713122506596307,0.2791497028213692,1.350601484371245,1.0535539194880896,logs/figure8_first_success.csv

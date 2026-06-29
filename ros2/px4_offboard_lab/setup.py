@@ -14,13 +14,14 @@ setup(
     zip_safe=True,
     maintainer="yjs",
     maintainer_email="yjs@example.com",
-    description="Simulation-only PX4 ROS 2 Offboard hover examples for SITL.",
+    description="Simulation-only PX4 ROS 2 Offboard trajectory tracking examples for SITL.",
     license="MIT",
     tests_require=["pytest"],
     entry_points={
         "console_scripts": [
             "offboard_hover = px4_offboard_lab.offboard_hover:main",
             "offboard_figure8 = px4_offboard_lab.offboard_figure8:main",
+            "offboard_trajectory = px4_offboard_lab.offboard_trajectory:main",
         ],
     },
 )

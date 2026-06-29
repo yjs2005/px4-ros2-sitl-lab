@@ -1,0 +1,30 @@
+{
+  "source_patterns": [
+    "logs/trajectory_*.csv",
+    "logs/offboard_trajectory_*.csv",
+    "logs/figure8_first_success.csv"
+  ],
+  "tracking_stage_inference": "rows where stage is tracking/trajectory/figure8, or where stage equals trajectory_type",
+  "discovered_files": [
+    "/mnt/d/42\u7cfb\u4fdd\u7814\u51c6\u5907/px4-ros2-sitl-lab/logs/figure8_first_success.csv"
+  ],
+  "skipped_files": {},
+  "metrics_by_trajectory_type": {
+    "figure8": {
+      "samples": 758,
+      "duration_s": 39.9998,
+      "frequency_hz_median": 20.0,
+      "xy_rmse_m": 0.2003109347250834,
+      "xy_mae_m": 0.18501934827846567,
+      "max_xy_error_m": 0.5037447048599721,
+      "z_rmse_m": 0.1944224421583633,
+      "z_mae_m": 0.06713122506596307,
+      "position_rmse_m": 0.2791497028213692,
+      "max_position_error_m": 1.350601484371245,
+      "max_speed_mps": 1.0535539194880896,
+      "source_files": [
+        "logs/figure8_first_success.csv"
+      ]
+    }
+  }
+}

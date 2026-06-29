@@ -582,3 +582,45 @@ python3 analysis/generate_gifs.py
 
 - Final repository packaging completed for a lightweight GitHub presentation workflow.
 - The project is still simulation-only and not for real aircraft deployment.
+
+## 2026-06-29 Multi-Trajectory Offboard Framework Extension
+
+### Environment
+
+- OS: Windows 11 host with WSL2 Ubuntu-22.04.
+- PX4: external checkout at `/home/yjs/src/PX4-Autopilot`.
+- ROS 2 workspace: `/home/yjs/px4_ros2_ws`.
+- Repository: `D:\42系保研准备\px4-ros2-sitl-lab`.
+
+### Goal
+
+- Extend the hover + figure-eight demo into a multi-trajectory Offboard tracking experiment framework.
+- Add code and offline analysis only; do not rerun PX4, Gazebo, Micro XRCE-DDS Agent, or Offboard flight.
+
+### Implementation
+
+- Added `offboard_trajectory` unified ROS 2 node.
+- Supported trajectory modes:
+  - `hover`
+  - `line`
+  - `square`
+  - `circle`
+  - `figure8`
+  - `z_step`
+- Added `scripts/run_trajectory.sh`.
+- Added `analysis/analyze_trajectory_suite.py`.
+- Added `docs/visual_recording.md`.
+
+### Notes
+
+- Current committed measured experiments remain hover and figure-eight.
+- `line`, `square`, `circle`, and `z_step` are implemented modes awaiting future SITL runs.
+- Future trajectory CSV logs can be summarized with:
+
+```bash
+python3 analysis/analyze_trajectory_suite.py
+```
+
+### Conclusion
+
+- Project scope expanded to a multi-trajectory Offboard tracking framework while preserving existing validated results.

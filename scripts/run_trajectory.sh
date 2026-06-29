@@ -1,0 +1,64 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+trajectory="${1:-}"
+if [[ -z "${trajectory}" ]]; then
+  cat <<'MSG'
+Usage:
+  bash scripts/run_trajectory.sh hover
+  bash scripts/run_trajectory.sh line
+  bash scripts/run_trajectory.sh square
+  bash scripts/run_trajectory.sh circle
+  bash scripts/run_trajectory.sh figure8
+  bash scripts/run_trajectory.sh z_step
+MSG
+  exit 1
+fi
+
+case "${trajectory}" in
+  hover|line|square|circle|figure8|z_step)
+    ;;
+  *)
+    echo "Unsupported trajectory: ${trajectory}"
+    echo "Choose one of: hover, line, square, circle, figure8, z_step"
+    exit 1
+    ;;
+esac
+
+cat <<MSG
+PX4 Offboard multi-trajectory runner (SITL only).
+
+Selected trajectory: ${trajectory}
+
+Before continuing, confirm:
+  1. QGroundControl is open, or SITL preflight checks are otherwise resolved.
+  2. Terminal 1 is running:
+     MicroXRCEAgent udp4 -p 8888
+  3. Terminal 2 is running:
+     cd ~/src/PX4-Autopilot && make px4_sitl gz_x500
+  4. This terminal can source the ROS 2 workspace.
+
+This script only sources ROS 2 and runs the offboard_trajectory node.
+It does not start PX4, does not start Gazebo, and does not kill processes.
+MSG
+
+read -r -p "Continue only if this is PX4 SITL, not a real aircraft [y/N]: " answer
+case "${answer}" in
+  y|Y|yes|YES)
+    ;;
+  *)
+    echo "Aborted."
+    exit 1
+    ;;
+esac
+
+source /opt/ros/humble/setup.bash
+source "${HOME}/px4_ros2_ws/install/setup.bash"
+
+if ! ros2 pkg list | grep -qx "px4_offboard_lab"; then
+  echo "px4_offboard_lab is not built in ${HOME}/px4_ros2_ws."
+  echo "Run: cd ~/px4_ros2_ws && colcon build --symlink-install"
+  exit 1
+fi
+
+ros2 run px4_offboard_lab offboard_trajectory --ros-args -p trajectory:="${trajectory}"

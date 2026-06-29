@@ -12,6 +12,8 @@ echo
 python3 analysis/analyze_figure8.py
 echo
 python3 analysis/generate_summary_visuals.py
+echo
+python3 analysis/analyze_trajectory_suite.py
 
 cat <<'MSG'
 
@@ -25,6 +27,10 @@ Generated result files:
   results/summary_metrics.csv
   results/figures/metrics_summary.png
   results/project_pipeline.md
+  results/trajectory_suite_metrics.md
+  results/trajectory_suite_metrics.json
+  results/trajectory_suite_metrics.csv
+  results/figures/trajectory_suite_metrics.png
 
 GIF generation is separate:
   python3 analysis/generate_gifs.py

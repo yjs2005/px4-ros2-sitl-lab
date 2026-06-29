@@ -373,3 +373,37 @@ source ~/px4_ros2_ws/install/setup.bash
 - Do not commit build outputs, caches, raw videos, large binary logs, or uncurated media.
 - If a future artifact is necessary and large, use Git LFS deliberately and document why.
 - Prefer small PNG summaries, Markdown tables, JSON metrics, and GIFs generated from CSV logs.
+
+## Multi-Trajectory Framework Notes
+
+### New Trajectory Mode Has No Result Yet
+
+- The unified `offboard_trajectory` node supports `line`, `square`, `circle`, and `z_step`.
+- Do not write these modes as completed experiments until a SITL run produces a CSV log and the log is analyzed.
+- Use `analysis/analyze_trajectory_suite.py` after adding future `offboard_trajectory_*.csv` logs.
+
+### Trajectory Parameter Typo
+
+- Supported values are:
+
+```text
+hover line square circle figure8 z_step
+```
+
+- A typo in `trajectory` will stop the node before flight commands are issued.
+
+### Square Or Circle Too Large
+
+- Keep radius and square size small for the default Gazebo world.
+- Start with `radius=1.0` or `square_size=1.5`, then increase only after checking tracking plots.
+
+### z_step Looks Like Altitude Sign Is Wrong
+
+- PX4 NED `z` is positive downward.
+- `z_step` intentionally switches near `-1.5` and `-2.5`; both are above the local origin.
+- If the vehicle moves downward, verify the sign of the altitude parameter.
+
+### Suite Analyzer Finds No New Logs
+
+- It scans `logs/trajectory_*.csv`, `logs/offboard_trajectory_*.csv`, and `logs/figure8_first_success.csv`.
+- Check that future logs include `trajectory_type`, `stage`, target columns, vehicle position, and velocity.
