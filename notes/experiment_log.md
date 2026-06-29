@@ -316,3 +316,116 @@ setpoint warm-up -> arm -> OFFBOARD -> hover -> land -> disarm
 ### Next Step
 
 - Preserve the CSV artifact, keep ULog local by default, and proceed to structured trajectory experiments only in SITL.
+
+## 2026-06-29 Phase 4 Hover Analysis And Figure-Eight Node
+
+### Environment
+
+- OS: Windows 11 host with WSL2 Ubuntu-22.04.
+- PX4: `PX4-Autopilot` at `/home/yjs/src/PX4-Autopilot`.
+- ROS 2: Humble.
+- ROS 2 workspace: `/home/yjs/px4_ros2_ws`.
+- Package: `px4_offboard_lab`.
+- Source CSV: `logs/offboard_hover_first_success.csv`.
+
+### Goal
+
+- Analyze the successful hover CSV and generate tracking metrics and figures.
+- Implement a SITL-only figure-eight Offboard node without running a live figure-eight experiment.
+
+### Commands
+
+```bash
+python3 analysis/analyze_offboard_hover.py
+python3 -m py_compile ros2/px4_offboard_lab/px4_offboard_lab/offboard_hover.py
+python3 -m py_compile ros2/px4_offboard_lab/px4_offboard_lab/offboard_figure8.py
+cd ~/px4_ros2_ws
+source /opt/ros/humble/setup.bash
+source install/setup.bash || true
+colcon build --symlink-install
+source install/setup.bash
+ros2 pkg list | grep px4_offboard_lab
+ros2 pkg executables px4_offboard_lab
+```
+
+### Hover Analysis Outputs
+
+- `analysis/analyze_offboard_hover.py`
+- `results/offboard_hover_metrics.json`
+- `results/offboard_hover_metrics.md`
+- `results/figures/offboard_hover_z.png`
+- `results/figures/offboard_hover_xy.png`
+- `results/figures/offboard_hover_ned_position.png`
+- `results/figures/offboard_hover_velocity.png`
+
+### Hover Metrics Summary
+
+- Whole-run samples: `364`
+- Whole-run duration: `18.150 s`
+- Median control frequency estimate: `20.00 Hz`
+- Hover samples: `241`
+- Hover duration: `12.000 s`
+- Final hover z error: `0.0124 m`
+- Full hover-stage z RMSE: `1.0455 m`
+- Full hover-stage z MAE: `0.6963 m`
+- Full hover-stage max absolute z error: `2.0018 m`
+- Full hover-stage XY RMSE: `0.0466 m`
+- Full hover-stage max XY error: `0.1159 m`
+- Full hover-stage max speed: `1.1084 m/s`
+
+The full hover-stage z RMSE includes the climb/convergence portion of the CSV `hover` stage, so it is larger than the final settled error.
+
+### Steady-State Hover Metrics
+
+Steady-state hover is defined as samples where `stage == "hover"` and `z <= -1.8`, isolating the settled portion near the NED target altitude `z=-2.0`.
+
+- Steady-state samples: `105`
+- Steady-state duration: `5.200 s`
+- Steady-state z RMSE: `0.0864 m`
+- Steady-state z MAE: `0.0713 m`
+- Steady-state max absolute z error: `0.1955 m`
+- Steady-state XY RMSE: `0.0313 m`
+- Steady-state max XY error: `0.0470 m`
+- Steady-state final position error: `0.0327 m`
+- Steady-state max speed: `0.0977 m/s`
+
+### Figure-Eight Implementation
+
+- Added `offboard_figure8` node under `ros2/px4_offboard_lab/px4_offboard_lab/offboard_figure8.py`.
+- Added `offboard_figure8` console entry point.
+- Added `scripts/run_figure8.sh`.
+- Added `docs/trajectory_tracking.md`.
+- Default figure-eight setpoint: `x(t)=1.0*sin(omega*t)`, `y(t)=0.6*sin(2*omega*t)`, `z=-2.0`, duration about `40 s`, publish rate `20 Hz`.
+
+### Build Validation
+
+```text
+Summary: 3 packages finished
+```
+
+Package discovery:
+
+```text
+px4_offboard_lab
+```
+
+Executables:
+
+```text
+px4_offboard_lab offboard_figure8
+px4_offboard_lab offboard_hover
+```
+
+### Issues
+
+- No live figure-eight Offboard flight was run.
+- The figure-eight node is implemented and build-verified only.
+
+### Conclusion
+
+- Phase 4 hover trajectory analysis completed.
+- Figure-eight Offboard node implemented and available for a later SITL-only flight experiment.
+
+### Next Step
+
+- Run the figure-eight experiment manually in SITL after QGroundControl/preflight readiness, Agent, PX4 SITL Gazebo, and ROS 2 workspace sourcing are confirmed.

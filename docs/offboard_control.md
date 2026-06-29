@@ -141,3 +141,17 @@ ros2 run px4_offboard_lab offboard_hover --dry-run
 ```
 
 Phase 3 hover has been verified in PX4 SITL. This does not imply real-aircraft readiness.
+
+## Phase 4 Analysis Link
+
+The successful hover CSV has been analyzed for tracking error and visualization:
+
+- `results/offboard_hover_metrics.md`
+- `results/figures/offboard_hover_z.png`
+- `results/figures/offboard_hover_xy.png`
+- `results/figures/offboard_hover_ned_position.png`
+- `results/figures/offboard_hover_velocity.png`
+
+The measured final hover z error was about `0.0124 m`, with final hover position error about `0.0327 m`.
+
+The `offboard_figure8` node is implemented for the next SITL-only trajectory experiment, but the figure-eight flight has not yet been run.

@@ -20,6 +20,7 @@ setup(
     entry_points={
         "console_scripts": [
             "offboard_hover = px4_offboard_lab.offboard_hover:main",
+            "offboard_figure8 = px4_offboard_lab.offboard_figure8:main",
         ],
     },
 )

@@ -232,3 +232,51 @@ Preflight Fail: No connection to the GCS
 - Gazebo: X500 SITL
 - Agent: `MicroXRCEAgent udp4 -p 8888`
 - Node: `ros2 run px4_offboard_lab offboard_hover`
+
+## Phase 4 Figure-Eight Troubleshooting
+
+### Figure-Eight Trajectory Too Large For Default World
+
+- Keep the default small trajectory first: `x` amplitude about `1.0 m`, `y` amplitude about `0.6 m`, `z=-2.0`.
+- Increase amplitudes only after reviewing tracking plots and confirming there is enough free space in Gazebo.
+
+### NED `z` Sign Reversed
+
+- PX4 local position is NED.
+- Negative `z` means upward.
+- A target of `z=-2.0` means about 2 meters above the local origin.
+- A positive altitude setpoint can command downward motion.
+
+### Offboard Exits Because Setpoint Rate Is Too Low
+
+- Keep setpoints above 10 Hz; both nodes default to 20 Hz.
+- Avoid blocking work in timer callbacks.
+- Check CSV timestamps after each run to confirm the publish-rate estimate.
+
+### QGroundControl / Preflight Health Check Missing
+
+- If PX4 reports `Preflight Fail: No connection to the GCS`, Offboard takeoff may not start.
+- Open QGroundControl or otherwise resolve the SITL preflight checks before attempting the figure-eight run.
+
+### Agent Not Connected
+
+- Start `MicroXRCEAgent udp4 -p 8888` before PX4 SITL when possible.
+- Check Agent logs for `session established`.
+- Check PX4 logs for `uxrce_dds_client` using UDP `127.0.0.1:8888`.
+
+### Figure-Eight Node Runs But No `/fmu/out/vehicle_odometry`
+
+- Confirm the ROS 2 workspace is sourced:
+
+```bash
+source /opt/ros/humble/setup.bash
+source ~/px4_ros2_ws/install/setup.bash
+```
+
+- Confirm `/fmu/out/vehicle_odometry` appears:
+
+```bash
+ros2 topic list | grep /fmu/out/vehicle_odometry
+```
+
+- If the topic is missing, verify Agent/PX4 bridge connection before running the node.
