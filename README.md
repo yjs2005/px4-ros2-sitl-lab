@@ -1,250 +1,137 @@
-# px4-ros2-sitl-lab
+# PX4 ROS 2 SITL 无人机 Offboard 控制与轨迹分析实验
 
-This repository is a research-oriented scaffold for quadrotor simulation trajectory tracking and log analysis based on PX4 SITL, Gazebo, and ROS 2 Offboard control.
+基于 PX4 SITL、Gazebo Harmonic、ROS 2 Humble 的无人机 Offboard 仿真控制项目，实现 X500 四旋翼定点悬停、8 字轨迹跟踪、CSV 日志记录和离线轨迹误差分析。
 
-Current status: Phase 4 hover trajectory analysis completed; the first figure-eight Offboard trajectory CSV has been analyzed from PX4 SITL.
+## 动态效果：8 字轨迹跟踪
 
-## Project Goal
+下面的 GIF 由 `logs/figure8_first_success.csv` 生成，展示目标轨迹与实际轨迹在 NED XY 平面上的推进过程，不是重新录屏或重新运行 Gazebo。
 
-Build a reproducible PX4 SITL + Gazebo + ROS 2 Offboard workflow for simulated quadrotor trajectory tracking and post-flight log analysis.
+![Figure-eight tracking GIF](media/figure8_tracking.gif)
 
-## Planned Tech Stack
+## 核心结果
 
-- PX4-Autopilot
-- Gazebo
-- ROS 2 Humble
-- Micro XRCE-DDS Agent
-- px4_msgs
-- Python
-- Matplotlib
-- rosbag2
+PX4 local position 使用 NED 坐标系，`z` 轴向下，因此 `z=-2.0` 表示向上约 2 m。
 
-## Planned Features
+| 实验 | 控制目标 | 关键结果 |
+| --- | --- | --- |
+| 定点悬停 | NED `(0, 0, -2)` | 稳态 z RMSE `0.0864 m`，XY RMSE `0.0313 m`，最终位置误差 `0.0327 m` |
+| 8 字轨迹 | `x=sin(t)`, `y=sin(2t)`, `z=-2`，跟踪 `40.000 s` | XY RMSE `0.2003 m`，z RMSE `0.1944 m`，3D RMSE `0.2791 m` |
 
-- Takeoff
-- Hover
-- Square trajectory tracking
-- Circular trajectory tracking
-- Figure-eight trajectory tracking
-- Log recording
-- Trajectory error analysis
+详细指标见：
 
-## Roadmap
+- [results/summary_metrics.md](results/summary_metrics.md)
+- [results/offboard_hover_metrics.md](results/offboard_hover_metrics.md)
+- [results/figure8_metrics.md](results/figure8_metrics.md)
 
-1. Environment setup
-2. Verify PX4 SITL, Gazebo, Micro XRCE-DDS Agent, and ROS 2 topic bridge
-3. Implement and verify ROS 2 Offboard takeoff and hover node in PX4 SITL
-4. Analyze hover tracking logs and generate figures
-5. Implement figure-eight Offboard trajectory node
-6. Analyze first figure-eight trajectory CSV
-7. Record future trajectory logs with rosbag2 and PX4 ULog
-8. Organize README, results, and experiment notes
+## 项目亮点
 
-## Phase 3 Offboard Hover Node
+- 搭建 PX4 SITL + Gazebo Harmonic X500 四旋翼仿真环境。
+- 使用 Micro XRCE-DDS Agent 打通 PX4 与 ROS 2 `/fmu/...` 话题桥接。
+- 实现 ROS 2 Python Offboard 节点，按 20 Hz 发布 setpoint，并在切入 OFFBOARD 前进行 setpoint warm-up。
+- 在 PX4 NED 坐标系下完成定点悬停与 8 字轨迹跟踪。
+- 记录 CSV 日志，生成 JSON / Markdown 指标、PNG 图表和 GIF 动态可视化。
+- 不提交 PX4-Autopilot、ULog 大文件和构建产物，仓库保持轻量、可复现。
 
-The Phase 3 package is `px4_offboard_lab`.
+## 方法流程
 
-Source copy in this repository:
+完整流程图见 [results/project_pipeline.md](results/project_pipeline.md)。
 
 ```text
-ros2/px4_offboard_lab/
+Windows / WSL2 Ubuntu
+-> PX4 SITL + Gazebo Harmonic X500
+-> Micro XRCE-DDS Agent
+-> ROS 2 Humble + px4_msgs + px4_ros_com
+-> ROS 2 Offboard hover / figure-eight nodes
+-> CSV logs
+-> analysis scripts
+-> metrics / figures / GIF / README
 ```
 
-Workspace location for building and running:
+## 结果图精选
 
-```text
-~/px4_ros2_ws/src/px4_offboard_lab
-```
+![Metrics summary](results/figures/metrics_summary.png)
 
-The node publishes:
+![Figure-eight XY tracking](results/figures/figure8_xy_tracking.png)
 
-- `/fmu/in/offboard_control_mode`
-- `/fmu/in/trajectory_setpoint`
-- `/fmu/in/vehicle_command`
+![Hover z tracking](results/figures/offboard_hover_z.png)
 
-The node subscribes:
+完整图表见 [results/README.md](results/README.md)。
 
-- `/fmu/out/vehicle_status`
-- `/fmu/out/vehicle_status_v4` for the currently observed PX4 message-versioned topic
-- `/fmu/out/vehicle_odometry`
+## 快速复现
 
-The verified target hover point is PX4 local NED `(x=0.0, y=0.0, z=-2.0)`. In NED, negative `z` means upward. The first successful run converged to about `z=-1.97 m`.
+详细环境说明见 [docs/reproducibility.md](docs/reproducibility.md)。下面只保留核心命令。
 
-To build after copying the package into the ROS 2 workspace:
+### 构建 ROS 2 Package
 
 ```bash
 cd ~/px4_ros2_ws
 source /opt/ros/humble/setup.bash
-source install/setup.bash
+source install/setup.bash || true
 colcon build --symlink-install
 source install/setup.bash
-ros2 pkg list | grep px4_offboard_lab
+ros2 pkg executables px4_offboard_lab
 ```
 
-To run later in SITL only, first start these in separate terminals:
+### 启动 SITL 与 Agent
+
+分别在不同终端中启动：
 
 ```bash
 MicroXRCEAgent udp4 -p 8888
-cd ~/src/PX4-Autopilot && make px4_sitl gz_x500
 ```
 
-Then run:
+```bash
+cd ~/src/PX4-Autopilot
+make px4_sitl gz_x500
+```
+
+运行 Offboard 前应打开 QGroundControl，或确保 SITL preflight checks 已解决。
+
+### 运行 Hover / Figure-Eight
 
 ```bash
 bash scripts/run_offboard_hover.sh
-```
-
-For command-free rehearsal:
-
-```bash
-bash scripts/run_offboard_hover.sh --dry-run
-```
-
-Verified Phase 3 control flow:
-
-```text
-setpoint warm-up -> arm -> OFFBOARD -> hover -> land -> disarm
-```
-
-Observed success markers:
-
-- PX4 commander reported `Armed by external command`.
-- PX4 commander reported `Takeoff detected`.
-- ROS 2 node reached hover stage with `arming_state=2` and `nav_state=14`.
-- Vehicle reached close to NED target `(0.0, 0.0, -2.0)`, with observed `z` about `-1.97 m`.
-- Node sent `Land command sent`.
-- PX4 commander reported `Landing detected` and `Disarmed by landing`.
-- Node printed `Offboard hover node sequence complete; shutting down`.
-
-Experiment artifacts:
-
-- Lightweight CSV artifact intended for this repository: `logs/offboard_hover_first_success.csv`.
-- Local ULog artifact: `logs/ulg/offboard_hover_first_success.ulg`.
-
-ULog files are ignored by default and should not be committed unless there is a specific reason to preserve a small curated binary artifact.
-
-## Phase 4 Hover Analysis
-
-Phase 4 computed trajectory metrics and generated plots from the first successful hover CSV.
-
-Source artifact:
-
-- [logs/offboard_hover_first_success.csv](logs/offboard_hover_first_success.csv)
-
-Results:
-
-- [results/offboard_hover_metrics.md](results/offboard_hover_metrics.md)
-- [results/offboard_hover_metrics.json](results/offboard_hover_metrics.json)
-- [results/figures/offboard_hover_z.png](results/figures/offboard_hover_z.png)
-- [results/figures/offboard_hover_xy.png](results/figures/offboard_hover_xy.png)
-- [results/figures/offboard_hover_ned_position.png](results/figures/offboard_hover_ned_position.png)
-- [results/figures/offboard_hover_velocity.png](results/figures/offboard_hover_velocity.png)
-
-Summary from the CSV:
-
-- Whole-run samples: `364`
-- Whole-run duration: `18.150 s`
-- Median control frequency estimate: `20.00 Hz`
-
-Full hover-stage metrics include the climb and convergence transient after the node enters the `hover` stage:
-
-- Hover-stage samples: `241`
-- Hover-stage duration: `12.000 s`
-- Full hover-stage z RMSE: `1.0455 m`
-- Full hover-stage XY RMSE: `0.0466 m`
-- Full hover-stage max speed: `1.1084 m/s`
-
-Steady-state hover metrics use samples where `stage == "hover"` and `z <= -1.8`, isolating the settled portion near the target altitude:
-
-- Steady-state samples: `105`
-- Steady-state duration: `5.200 s`
-- Steady-state z RMSE: `0.0864 m`
-- Steady-state z MAE: `0.0713 m`
-- Steady-state max absolute z error: `0.1955 m`
-- Steady-state XY RMSE: `0.0313 m`
-- Steady-state max XY error: `0.0470 m`
-- Steady-state final position error: `0.0327 m`
-- Steady-state max speed: `0.0977 m/s`
-
-The final hover z error is `0.0124 m`; the larger full hover-stage z RMSE is retained because it captures the climb-to-altitude transient.
-
-To regenerate:
-
-```bash
-python analysis/analyze_offboard_hover.py
-```
-
-## Figure-Eight Experiment And Analysis
-
-The `offboard_figure8` node has been implemented and built in the existing `px4_offboard_lab` package. The first figure-eight CSV has been copied into this repository and analyzed offline.
-
-Default trajectory:
-
-```text
-x(t) = 1.0 * sin(omega * t)
-y(t) = 0.6 * sin(2 * omega * t)
-z(t) = -2.0
-duration ~= 40 s
-rate = 20 Hz
-```
-
-The node uses the same safety and Offboard flow:
-
-```text
-setpoint warm-up -> arm -> OFFBOARD -> pre-figure-eight hover -> figure-eight -> land
-```
-
-Figure-eight source artifact:
-
-- [logs/figure8_first_success.csv](logs/figure8_first_success.csv)
-
-Figure-eight results:
-
-- [results/figure8_metrics.md](results/figure8_metrics.md)
-- [results/figure8_metrics.json](results/figure8_metrics.json)
-- [results/figures/figure8_xy_tracking.png](results/figures/figure8_xy_tracking.png)
-- [results/figures/figure8_z_tracking.png](results/figures/figure8_z_tracking.png)
-- [results/figures/figure8_position_error.png](results/figures/figure8_position_error.png)
-- [results/figures/figure8_velocity.png](results/figures/figure8_velocity.png)
-
-The CSV contains `warmup`, `arming`, `offboard`, `pre_figure8_hover`, `figure8`, and `landing` stages. Tracking metrics use `stage == "figure8"` as the figure-eight window.
-
-Summary from the figure-eight CSV:
-
-- Whole-run samples: `941`
-- Whole-run duration: `50.800 s`
-- Median frequency estimate: `20.00 Hz`
-- Figure-eight tracking samples: `758`
-- Figure-eight tracking duration: `40.000 s`
-- XY RMSE: `0.2003 m`
-- XY MAE: `0.1850 m`
-- Max XY error: `0.5037 m`
-- z RMSE: `0.1944 m`
-- z MAE: `0.0671 m`
-- Max absolute z error: `1.3490 m`
-- 3D position RMSE: `0.2791 m`
-- Max 3D position error: `1.3506 m`
-- Final position error before landing: `0.2492 m`
-- Max speed during tracking: `1.0536 m/s`
-
-This is time-varying trajectory tracking: the node generated changing `target_x` and `target_y` setpoints through PX4 `/fmu/in/...` topics. Hover is fixed-point tracking at `(0, 0, -2)`, while figure-eight tracking follows a moving XY setpoint at the same NED altitude convention.
-
-After building and starting the required SITL processes manually, run:
-
-```bash
 bash scripts/run_figure8.sh
 ```
 
-To regenerate the offline analysis:
+### 运行离线分析
+
+不需要重新运行 PX4 或 Gazebo，可直接从已提交 CSV 复现实验图表：
 
 ```bash
-python analysis/analyze_figure8.py
+bash scripts/analyze_all.sh
+python3 analysis/generate_gifs.py
 ```
 
-## Safety
+## 项目结构
 
-The Offboard nodes are simulation-only and not for real aircraft deployment. Do not connect them to a physical vehicle.
+```text
+px4-ros2-sitl-lab/
+├── analysis/              # 离线分析、汇总图和 GIF 生成脚本
+├── docs/                  # 环境、Offboard、轨迹和复现说明
+├── logs/                  # 轻量 CSV 实验日志
+├── media/                 # GIF 可视化产物
+├── notes/                 # 实验记录与 troubleshooting
+├── results/               # 指标、图表和项目级汇总
+├── ros2/px4_offboard_lab/ # ROS 2 Offboard package 源码副本
+└── scripts/               # SITL 运行脚本和离线分析入口
+```
 
-## Notes
+更完整说明见 [docs/project_structure.md](docs/project_structure.md)。
 
-PX4-Autopilot is kept outside this repository at `/home/yjs/src/PX4-Autopilot`. ROS 2 Humble, Micro XRCE-DDS Agent, `px4_msgs`, and `px4_ros_com` have been installed and the PX4-to-ROS 2 `/fmu/...` topic bridge has been verified. Custom Offboard hover has been verified in PX4 SITL, and figure-eight Offboard code is ready for a later SITL-only experiment.
+## 数据与可视化产物
+
+- Hover CSV: [logs/offboard_hover_first_success.csv](logs/offboard_hover_first_success.csv)
+- Figure-eight CSV: [logs/figure8_first_success.csv](logs/figure8_first_success.csv)
+- 指标与图表: [results/](results/)
+- 动态可视化: [media/figure8_tracking.gif](media/figure8_tracking.gif)
+
+`logs/ulg/*.ulg` 为本地 PX4 ULog 二进制日志，默认不提交。PX4-Autopilot 和 ROS 2 workspace 也不放入本仓库。
+
+## 局限性
+
+- 仅完成 SITL 仿真验证，未做真机部署。
+- 8 字结果来自一次受控仿真实验，不是鲁棒性 benchmark。
+- 指标受 PX4 参数、Gazebo 仿真环境、Offboard 控制参数、QGroundControl / failsafe 状态影响。
+- ULog、大型视频和构建产物默认不提交，以保持仓库轻量。
+

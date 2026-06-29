@@ -1,0 +1,34 @@
+{
+  "source_files": {
+    "hover": "results/offboard_hover_metrics.json",
+    "figure8": "results/figure8_metrics.json"
+  },
+  "notes": [
+    "Summary is generated from existing analysis JSON files.",
+    "Hover metrics use the steady-state hover window from offboard_hover_metrics.json.",
+    "Figure-eight metrics use the tracking window from figure8_metrics.json.",
+    "PX4 local coordinates are NED; negative z means upward."
+  ],
+  "experiments": {
+    "hover_steady_state": {
+      "definition": "stage == \"hover\" and z <= -1.8",
+      "samples": 105,
+      "duration_s": 5.200051,
+      "z_rmse_m": 0.08640922045270731,
+      "xy_rmse_m": 0.031348198731817364,
+      "final_position_error_m": 0.03273943361579145,
+      "max_speed_mps": 0.09769627218519246
+    },
+    "figure8_tracking": {
+      "definition": "stage == \"figure8\"",
+      "samples": 758,
+      "duration_s": 39.9998,
+      "xy_rmse_m": 0.2003109347250834,
+      "z_rmse_m": 0.1944224421583633,
+      "position_rmse_m": 0.2791497028213692,
+      "max_position_error_m": 1.350601484371245,
+      "final_position_error_before_landing_m": 0.2492026258210918,
+      "max_speed_mps": 1.0535539194880896
+    }
+  }
+}

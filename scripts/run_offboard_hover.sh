@@ -5,9 +5,10 @@ cat <<'MSG'
 PX4 Offboard hover runner (SITL only).
 
 Before continuing, start these in separate terminals:
-  1. MicroXRCEAgent udp4 -p 8888
-  2. cd ~/src/PX4-Autopilot && make px4_sitl gz_x500
-  3. Keep Gazebo and PX4 running until the hover node exits.
+  1. QGroundControl is open, or SITL preflight checks are otherwise resolved.
+  2. MicroXRCEAgent udp4 -p 8888
+  3. cd ~/src/PX4-Autopilot && make px4_sitl gz_x500
+  4. Keep Gazebo and PX4 running until the hover node exits.
 
 This script only sources ROS 2 and runs the offboard_hover node.
 It does not start PX4, does not start Gazebo, and does not kill processes.

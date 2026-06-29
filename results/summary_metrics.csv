@@ -1,0 +1,12 @@
+experiment,metric,value,unit,description
+hover_steady_state,steady_state_z_rmse,0.08640922045270731,m,Steady hover z RMSE
+hover_steady_state,steady_state_xy_rmse,0.031348198731817364,m,Steady hover XY RMSE
+hover_steady_state,final_position_error,0.03273943361579145,m,Final steady hover position error
+hover_steady_state,max_steady_state_speed,0.09769627218519246,m/s,Maximum speed during steady hover
+figure8_tracking,tracking_duration,39.9998,s,Figure-eight tracking duration
+figure8_tracking,xy_rmse,0.2003109347250834,m,Figure-eight XY RMSE
+figure8_tracking,z_rmse,0.1944224421583633,m,Figure-eight z RMSE
+figure8_tracking,position_rmse,0.2791497028213692,m,Figure-eight 3D RMSE
+figure8_tracking,max_position_error,1.350601484371245,m,Figure-eight max 3D position error
+figure8_tracking,final_position_error_before_landing,0.2492026258210918,m,Figure-eight final position error before landing
+figure8_tracking,max_tracking_speed,1.0535539194880896,m/s,Maximum speed during figure-eight tracking

@@ -82,6 +82,7 @@ Generated outputs:
 - `results/figures/figure8_z_tracking.png`
 - `results/figures/figure8_position_error.png`
 - `results/figures/figure8_velocity.png`
+- `media/figure8_tracking.gif`
 
 Summary:
 
@@ -110,6 +111,14 @@ Hover tracking is fixed-point tracking: the target remains near PX4 NED `(0, 0, 
 Figure-eight tracking is time-varying trajectory tracking: `target_x` and `target_y` change continuously while `target_z` remains `-2.0`.
 
 Both experiments use ROS 2 Offboard setpoints through PX4 `/fmu/in/...` topics and observe vehicle state through `/fmu/out/...` topics.
+
+Project-level summaries are available at:
+
+- `results/summary_metrics.md`
+- `results/summary_metrics.json`
+- `results/summary_metrics.csv`
+- `results/figures/metrics_summary.png`
+- `results/project_pipeline.md`
 
 ## Offboard Warm-Up
 

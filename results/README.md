@@ -1,16 +1,40 @@
 # Results
 
-This directory stores lightweight, reproducible result summaries for PX4 SITL experiments.
+本目录保存 PX4 SITL Offboard 实验的轻量、可复现分析结果，包括 Markdown 指标、JSON/CSV 汇总和 PNG 图表。
 
-## Phase 4 Hover Analysis
+## 项目级汇总
 
-The first successful Offboard hover CSV is analyzed by:
+生成命令：
+
+```bash
+python analysis/generate_summary_visuals.py
+```
+
+输出：
+
+- `results/summary_metrics.md`
+- `results/summary_metrics.json`
+- `results/summary_metrics.csv`
+- `results/figures/metrics_summary.png`
+- `results/project_pipeline.md`
+
+项目级汇总优先读取已有分析 JSON，不改变 hover 或 figure-eight 的原始分析逻辑。
+
+![Metrics summary](figures/metrics_summary.png)
+
+## Hover Analysis
+
+输入 CSV：
+
+- `logs/offboard_hover_first_success.csv`
+
+生成命令：
 
 ```bash
 python analysis/analyze_offboard_hover.py
 ```
 
-Generated outputs:
+输出：
 
 - `results/offboard_hover_metrics.json`
 - `results/offboard_hover_metrics.md`
@@ -19,33 +43,36 @@ Generated outputs:
 - `results/figures/offboard_hover_ned_position.png`
 - `results/figures/offboard_hover_velocity.png`
 
-The source CSV is `logs/offboard_hover_first_success.csv`.
+关键结果：
 
-Summary:
-
-- Whole-run samples: `364`
-- Median control frequency estimate: `20.00 Hz`
-- Full hover-stage duration: `12.000 s`
-- Full hover-stage z RMSE: `1.0455 m`
-- Full hover-stage XY RMSE: `0.0466 m`
 - Steady-state hover definition: `stage == "hover" and z <= -1.8`
-- Steady-state hover duration: `5.200 s`
 - Steady-state z RMSE: `0.0864 m`
-- Steady-state z MAE: `0.0713 m`
 - Steady-state XY RMSE: `0.0313 m`
 - Steady-state final position error: `0.0327 m`
 
-The full hover-stage metrics intentionally retain the climb-to-altitude transient. Use the steady-state hover metrics when evaluating settled tracking near the target NED altitude `z=-2.0`.
+完整 hover 图表：
+
+![Hover z tracking](figures/offboard_hover_z.png)
+
+![Hover XY trajectory](figures/offboard_hover_xy.png)
+
+![Hover NED position](figures/offboard_hover_ned_position.png)
+
+![Hover velocity](figures/offboard_hover_velocity.png)
 
 ## Figure-Eight Analysis
 
-The first copied figure-eight Offboard CSV is analyzed by:
+输入 CSV：
+
+- `logs/figure8_first_success.csv`
+
+生成命令：
 
 ```bash
 python analysis/analyze_figure8.py
 ```
 
-Generated outputs:
+输出：
 
 - `results/figure8_metrics.json`
 - `results/figure8_metrics.md`
@@ -54,24 +81,45 @@ Generated outputs:
 - `results/figures/figure8_position_error.png`
 - `results/figures/figure8_velocity.png`
 
-The source CSV is `logs/figure8_first_success.csv`.
+Tracking-stage filter:
 
-The tracking-stage filter is `stage == "figure8"`. The CSV also contains a `landing` stage, so this dataset records a completed SITL trajectory sequence.
+```text
+stage == "figure8"
+```
 
-Summary:
+关键结果：
 
-- Whole-run samples: `941`
-- Median logging/control frequency estimate: `20.00 Hz`
-- Figure-eight tracking duration: `40.000 s`
+- Tracking duration: `40.000 s`
 - XY RMSE: `0.2003 m`
-- XY MAE: `0.1850 m`
-- Max XY error: `0.5037 m`
 - z RMSE: `0.1944 m`
-- z MAE: `0.0671 m`
-- Max absolute z error: `1.3490 m`
 - 3D position RMSE: `0.2791 m`
 - Max 3D position error: `1.3506 m`
 - Final position error before landing: `0.2492 m`
-- Max speed during tracking: `1.0536 m/s`
 
-Hover is fixed-point tracking, while figure-eight is time-varying XY tracking. Both are PX4 SITL-only results using ROS 2 Offboard setpoints through `/fmu/in/...`.
+完整 figure-eight 图表：
+
+![Figure-eight XY tracking](figures/figure8_xy_tracking.png)
+
+![Figure-eight z tracking](figures/figure8_z_tracking.png)
+
+![Figure-eight position error](figures/figure8_position_error.png)
+
+![Figure-eight velocity](figures/figure8_velocity.png)
+
+## Media
+
+生成命令：
+
+```bash
+python analysis/generate_gifs.py
+```
+
+输出：
+
+- `media/figure8_tracking.gif`
+
+GIF 由 `logs/figure8_first_success.csv` 离线生成，展示 NED XY 平面上的目标轨迹和实际轨迹。它不依赖重新运行 PX4 或 Gazebo。
+
+## 说明
+
+Hover 是固定点跟踪，figure-eight 是时变 XY 轨迹跟踪。两者均为 PX4 SITL 仿真结果，使用 ROS 2 Offboard setpoint 通过 PX4 `/fmu/in/...` 话题发送控制输入。

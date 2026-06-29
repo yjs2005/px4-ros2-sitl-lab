@@ -306,3 +306,70 @@ ros2 topic list | grep /fmu/out/vehicle_odometry
 - The figure-eight CSV records a PX4 SITL experiment only.
 - The analysis does not prove controller safety or robustness on real hardware.
 - Keep all trajectory changes simulation-only unless a separate real-aircraft safety process exists.
+
+## Final Repository Packaging Notes
+
+### Windows PowerShell And Ubuntu Commands Mixed
+
+- Windows repository commands run from PowerShell at `D:\42系保研准备\px4-ros2-sitl-lab`.
+- Ubuntu commands should be run through WSL, for example:
+
+```powershell
+wsl -d Ubuntu-22.04 -- bash -lc "cd ~/src/px4-ros2-sitl-lab && python3 analysis/analyze_figure8.py"
+```
+
+- Use Linux paths inside WSL and Windows paths in PowerShell. Avoid mixing path styles inside the same command.
+
+### WSL Proxy / GitHub Clone Timeout
+
+- Earlier PX4 clone attempts failed due to GitHub connectivity and WSL not inheriting the Windows localhost proxy.
+- If this happens again, configure a WSL-accessible proxy explicitly or retry from a more stable network.
+- Do not change system proxy settings without documenting the change.
+
+### ROS 2 Source Environment Variables
+
+- Non-interactive WSL shells may not inherit ROS 2 setup from `~/.bashrc`.
+- Prefer explicit source commands:
+
+```bash
+source /opt/ros/humble/setup.bash
+source ~/px4_ros2_ws/install/setup.bash
+```
+
+### Micro XRCE-DDS Agent Version Checks
+
+- Some `MicroXRCEAgent` builds do not support a conventional `--version` check.
+- Prefer functional validation:
+  - Start `MicroXRCEAgent udp4 -p 8888`.
+  - Start PX4 SITL.
+  - Confirm the Agent log shows `session established`.
+  - Confirm ROS 2 can see `/fmu/...` topics.
+
+### No GCS / Arming Denied
+
+- If PX4 reports `Preflight Fail: No connection to the GCS`, Offboard takeoff may be denied.
+- Open QGroundControl or otherwise resolve SITL preflight checks before running hover or figure-eight nodes.
+
+### NED z Sign Reversed
+
+- PX4 local position uses NED: North, East, Down.
+- Negative `z` means upward.
+- The hover and figure-eight nodes use `target_z=-2.0`.
+
+### Offboard Setpoint Rate Too Low
+
+- PX4 Offboard requires a continuous setpoint stream.
+- Keep publish rate above 10 Hz; this project uses 20 Hz.
+- Avoid blocking work inside the timer callback.
+
+### CSV / ULog File Management
+
+- Commit lightweight CSV logs that are useful for reproducible analysis.
+- Keep large PX4 ULog files local by default under `logs/ulg/`.
+- `logs/ulg/*.ulg` is ignored in `.gitignore`.
+
+### Git LFS / Large Files
+
+- Do not commit build outputs, caches, raw videos, large binary logs, or uncurated media.
+- If a future artifact is necessary and large, use Git LFS deliberately and document why.
+- Prefer small PNG summaries, Markdown tables, JSON metrics, and GIFs generated from CSV logs.

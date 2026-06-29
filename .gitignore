@@ -2,10 +2,13 @@
 build/
 install/
 log/
+.colcon/
 
 # Python cache
 __pycache__/
+**/__pycache__/
 *.py[cod]
+*.pyc
 *$py.class
 .pytest_cache/
 .mypy_cache/
@@ -43,3 +46,7 @@ results/videos/*
 .DS_Store
 Thumbs.db
 desktop.ini
+
+# Local IDE settings
+.vscode/
+.idea/
