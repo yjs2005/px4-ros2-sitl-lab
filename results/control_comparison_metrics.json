@@ -5,9 +5,58 @@
     "logs/offboard_trajectory_*_smooth_*.csv"
   ],
   "tracking_stage_inference": "rows where stage is tracking/trajectory/figure8/line/circle/square/z_step, or where stage equals trajectory_type",
-  "discovered_files": [],
+  "discovered_files": [
+    "logs/offboard_trajectory_circle_baseline_20260629_235707.csv",
+    "logs/offboard_trajectory_circle_feedforward_20260630_003510.csv"
+  ],
   "skipped_files": {},
-  "metrics_by_trajectory_and_mode": {},
-  "paired_improvements": [],
-  "message": "No paired baseline/improved logs found yet. Run paired SITL experiments first."
+  "metrics_by_trajectory_and_mode": {
+    "circle:baseline": {
+      "trajectory_type": "circle",
+      "controller_mode": "baseline",
+      "samples": 771,
+      "duration_s": 39.999968,
+      "xy_rmse_m": 0.2281003969075206,
+      "xy_mae_m": 0.19420391622590932,
+      "max_xy_error_m": 0.943336515466583,
+      "z_rmse_m": 0.19047712581895065,
+      "z_mae_m": 0.06624076749675746,
+      "position_rmse_m": 0.29717221695444,
+      "max_position_error_m": 1.632124444847964,
+      "final_position_error_before_landing_m": 0.13318829096201187,
+      "max_speed_mps": 1.098177290459201,
+      "source_files": [
+        "logs/offboard_trajectory_circle_baseline_20260629_235707.csv"
+      ]
+    },
+    "circle:feedforward": {
+      "trajectory_type": "circle",
+      "controller_mode": "feedforward",
+      "samples": 772,
+      "duration_s": 39.950033,
+      "xy_rmse_m": 0.1559460382835017,
+      "xy_mae_m": 0.06170621601094994,
+      "max_xy_error_m": 0.9470070036487239,
+      "z_rmse_m": 0.19707481622862555,
+      "z_mae_m": 0.06697899363989636,
+      "position_rmse_m": 0.2513118581521093,
+      "max_position_error_m": 1.6924139607545636,
+      "final_position_error_before_landing_m": 0.02000094797604929,
+      "max_speed_mps": 1.1328392288205136,
+      "source_files": [
+        "logs/offboard_trajectory_circle_feedforward_20260630_003510.csv"
+      ]
+    }
+  },
+  "paired_improvements": [
+    {
+      "trajectory_type": "circle",
+      "improved_mode": "feedforward",
+      "xy_rmse_improvement_percent": 31.632719452598167,
+      "z_rmse_improvement_percent": -3.46377045606307,
+      "position_rmse_improvement_percent": 15.432249781735694,
+      "max_error_improvement_percent": -3.6939288604439597
+    }
+  ],
+  "message": "Paired baseline/improved logs found."
 }

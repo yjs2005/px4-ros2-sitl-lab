@@ -1,6 +1,6 @@
 # Control Mode Comparison Metrics
 
-No paired baseline/improved logs found yet. Run paired SITL experiments first.
+Paired baseline/improved logs found.
 
 This analysis only uses logs that explicitly include a `controller_mode` column and match the new `offboard_trajectory_*_<mode>_*.csv` naming pattern.
 
@@ -8,13 +8,14 @@ This analysis only uses logs that explicitly include a `controller_mode` column 
 
 | Trajectory | Mode | Samples | Duration (s) | XY RMSE (m) | z RMSE (m) | 3D RMSE (m) | Max 3D (m) | Final before landing (m) | Max speed (m/s) |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| n/a | n/a | 0 | n/a | n/a | n/a | n/a | n/a | n/a | n/a |
+| circle | baseline | 771 | 40.000 | 0.2281 | 0.1905 | 0.2972 | 1.6321 | 0.1332 | 1.0982 |
+| circle | feedforward | 772 | 39.950 | 0.1559 | 0.1971 | 0.2513 | 1.6924 | 0.0200 | 1.1328 |
 
 ## Paired Improvements
 
 | Trajectory | Improved mode | XY RMSE improvement | z RMSE improvement | 3D RMSE improvement | Max error improvement |
 | --- | --- | ---: | ---: | ---: | ---: |
-| n/a | n/a | n/a | n/a | n/a | n/a |
+| circle | feedforward | 31.63% | -3.46% | 15.43% | -3.69% |
 
 ## Figures
 
