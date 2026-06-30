@@ -7,7 +7,11 @@
   "tracking_stage_inference": "rows where stage is tracking/trajectory/figure8/line/circle/square/z_step, or where stage equals trajectory_type",
   "discovered_files": [
     "logs/offboard_trajectory_circle_baseline_20260629_235707.csv",
-    "logs/offboard_trajectory_circle_feedforward_20260630_003510.csv"
+    "logs/offboard_trajectory_circle_feedforward_20260630_003510.csv",
+    "logs/offboard_trajectory_figure8_baseline_20260630_115423.csv",
+    "logs/offboard_trajectory_figure8_feedforward_20260630_120214.csv",
+    "logs/offboard_trajectory_square_baseline_20260630_120601.csv",
+    "logs/offboard_trajectory_square_smooth_20260630_120804.csv"
   ],
   "skipped_files": {},
   "metrics_by_trajectory_and_mode": {
@@ -46,6 +50,78 @@
       "source_files": [
         "logs/offboard_trajectory_circle_feedforward_20260630_003510.csv"
       ]
+    },
+    "figure8:baseline": {
+      "trajectory_type": "figure8",
+      "controller_mode": "baseline",
+      "samples": 800,
+      "duration_s": 39.949938,
+      "xy_rmse_m": 0.2207825085377005,
+      "xy_mae_m": 0.20878372130666903,
+      "max_xy_error_m": 0.3738684506711788,
+      "z_rmse_m": 0.18708834518590592,
+      "z_mae_m": 0.06433775446250001,
+      "position_rmse_m": 0.28939067880738745,
+      "max_position_error_m": 1.3343293391665156,
+      "final_position_error_before_landing_m": 0.2824660659075871,
+      "max_speed_mps": 1.0559644570153508,
+      "source_files": [
+        "logs/offboard_trajectory_figure8_baseline_20260630_115423.csv"
+      ]
+    },
+    "figure8:feedforward": {
+      "trajectory_type": "figure8",
+      "controller_mode": "feedforward",
+      "samples": 778,
+      "duration_s": 39.999876,
+      "xy_rmse_m": 0.06110180732558506,
+      "xy_mae_m": 0.05249979134616355,
+      "max_xy_error_m": 0.21870133551063445,
+      "z_rmse_m": 0.37895623829812897,
+      "z_mae_m": 0.12152331069652955,
+      "position_rmse_m": 0.3838505717118593,
+      "max_position_error_m": 2.007747673702714,
+      "final_position_error_before_landing_m": 0.016807403153624695,
+      "max_speed_mps": 1.1865495505338999,
+      "source_files": [
+        "logs/offboard_trajectory_figure8_feedforward_20260630_120214.csv"
+      ]
+    },
+    "square:baseline": {
+      "trajectory_type": "square",
+      "controller_mode": "baseline",
+      "samples": 771,
+      "duration_s": 39.95013,
+      "xy_rmse_m": 0.24031802536860902,
+      "xy_mae_m": 0.19427375320260376,
+      "max_xy_error_m": 1.0956260874094912,
+      "z_rmse_m": 0.20460800178982808,
+      "z_mae_m": 0.07006613604409857,
+      "position_rmse_m": 0.3156219062636397,
+      "max_position_error_m": 1.8295953897056836,
+      "final_position_error_before_landing_m": 0.1478100800522414,
+      "max_speed_mps": 1.0977039504715524,
+      "source_files": [
+        "logs/offboard_trajectory_square_baseline_20260630_120601.csv"
+      ]
+    },
+    "square:smooth": {
+      "trajectory_type": "square",
+      "controller_mode": "smooth",
+      "samples": 767,
+      "duration_s": 39.95014,
+      "xy_rmse_m": 0.19282681547240393,
+      "xy_mae_m": 0.08731999161604652,
+      "max_xy_error_m": 1.1154155338228715,
+      "z_rmse_m": 0.19995891683423941,
+      "z_mae_m": 0.06910117162972619,
+      "position_rmse_m": 0.2777872372639729,
+      "max_position_error_m": 1.8015447897052725,
+      "final_position_error_before_landing_m": 0.0675062684533259,
+      "max_speed_mps": 1.1050515197251354,
+      "source_files": [
+        "logs/offboard_trajectory_square_smooth_20260630_120804.csv"
+      ]
     }
   },
   "paired_improvements": [
@@ -56,6 +132,22 @@
       "z_rmse_improvement_percent": -3.46377045606307,
       "position_rmse_improvement_percent": 15.432249781735694,
       "max_error_improvement_percent": -3.6939288604439597
+    },
+    {
+      "trajectory_type": "figure8",
+      "improved_mode": "feedforward",
+      "xy_rmse_improvement_percent": 72.324887632504,
+      "z_rmse_improvement_percent": -102.5547010539688,
+      "position_rmse_improvement_percent": -32.640959029417274,
+      "max_error_improvement_percent": -50.468674769367404
+    },
+    {
+      "trajectory_type": "square",
+      "improved_mode": "smooth",
+      "xy_rmse_improvement_percent": 19.761817626189814,
+      "z_rmse_improvement_percent": 2.2721911728379856,
+      "position_rmse_improvement_percent": 11.987339360425562,
+      "max_error_improvement_percent": 1.5331586512646043
     }
   ],
   "message": "Paired baseline/improved logs found."

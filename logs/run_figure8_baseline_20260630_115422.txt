@@ -1,0 +1,16 @@
+PX4 Offboard trajectory runner (SITL only).
+
+Selected trajectory: figure8
+Selected controller mode: baseline
+CSV log directory: /home/yjs/src/px4-ros2-sitl-lab/logs
+
+Prerequisites:
+  1. QGroundControl should be open.
+  2. MicroXRCEAgent should be running:
+     MicroXRCEAgent udp4 -p 8888
+  3. PX4 SITL should be running:
+     cd ~/src/PX4-Autopilot && make px4_sitl gz_x500
+
+This script only runs the ROS 2 trajectory node.
+It does not start PX4, Gazebo, or Agent.
+It does not kill processes, delete files, reset anything, or modify PX4 parameters.
