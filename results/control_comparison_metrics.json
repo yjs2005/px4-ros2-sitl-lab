@@ -2,6 +2,7 @@
   "source_patterns": [
     "logs/offboard_trajectory_*_baseline_*.csv",
     "logs/offboard_trajectory_*_feedforward_*.csv",
+    "logs/offboard_trajectory_*_planar_ff_*.csv",
     "logs/offboard_trajectory_*_smooth_*.csv"
   ],
   "tracking_stage_inference": "rows where stage is tracking/trajectory/figure8/line/circle/square/z_step, or where stage equals trajectory_type",
@@ -15,9 +16,10 @@
   ],
   "skipped_files": {},
   "metrics_by_trajectory_and_mode": {
-    "circle:baseline": {
+    "circle:baseline:g1": {
       "trajectory_type": "circle",
       "controller_mode": "baseline",
+      "ff_gain": 1.0,
       "samples": 771,
       "duration_s": 39.999968,
       "xy_rmse_m": 0.2281003969075206,
@@ -33,9 +35,10 @@
         "logs/offboard_trajectory_circle_baseline_20260629_235707.csv"
       ]
     },
-    "circle:feedforward": {
+    "circle:feedforward:g1": {
       "trajectory_type": "circle",
       "controller_mode": "feedforward",
+      "ff_gain": 1.0,
       "samples": 772,
       "duration_s": 39.950033,
       "xy_rmse_m": 0.1559460382835017,
@@ -51,9 +54,10 @@
         "logs/offboard_trajectory_circle_feedforward_20260630_003510.csv"
       ]
     },
-    "figure8:baseline": {
+    "figure8:baseline:g1": {
       "trajectory_type": "figure8",
       "controller_mode": "baseline",
+      "ff_gain": 1.0,
       "samples": 800,
       "duration_s": 39.949938,
       "xy_rmse_m": 0.2207825085377005,
@@ -69,9 +73,10 @@
         "logs/offboard_trajectory_figure8_baseline_20260630_115423.csv"
       ]
     },
-    "figure8:feedforward": {
+    "figure8:feedforward:g1": {
       "trajectory_type": "figure8",
       "controller_mode": "feedforward",
+      "ff_gain": 1.0,
       "samples": 778,
       "duration_s": 39.999876,
       "xy_rmse_m": 0.06110180732558506,
@@ -87,9 +92,10 @@
         "logs/offboard_trajectory_figure8_feedforward_20260630_120214.csv"
       ]
     },
-    "square:baseline": {
+    "square:baseline:g1": {
       "trajectory_type": "square",
       "controller_mode": "baseline",
+      "ff_gain": 1.0,
       "samples": 771,
       "duration_s": 39.95013,
       "xy_rmse_m": 0.24031802536860902,
@@ -105,9 +111,10 @@
         "logs/offboard_trajectory_square_baseline_20260630_120601.csv"
       ]
     },
-    "square:smooth": {
+    "square:smooth:g1": {
       "trajectory_type": "square",
       "controller_mode": "smooth",
+      "ff_gain": 1.0,
       "samples": 767,
       "duration_s": 39.95014,
       "xy_rmse_m": 0.19282681547240393,
@@ -128,6 +135,7 @@
     {
       "trajectory_type": "circle",
       "improved_mode": "feedforward",
+      "ff_gain": 1.0,
       "xy_rmse_improvement_percent": 31.632719452598167,
       "z_rmse_improvement_percent": -3.46377045606307,
       "position_rmse_improvement_percent": 15.432249781735694,
@@ -136,6 +144,7 @@
     {
       "trajectory_type": "figure8",
       "improved_mode": "feedforward",
+      "ff_gain": 1.0,
       "xy_rmse_improvement_percent": 72.324887632504,
       "z_rmse_improvement_percent": -102.5547010539688,
       "position_rmse_improvement_percent": -32.640959029417274,
@@ -144,6 +153,7 @@
     {
       "trajectory_type": "square",
       "improved_mode": "smooth",
+      "ff_gain": 1.0,
       "xy_rmse_improvement_percent": 19.761817626189814,
       "z_rmse_improvement_percent": 2.2721911728379856,
       "position_rmse_improvement_percent": 11.987339360425562,

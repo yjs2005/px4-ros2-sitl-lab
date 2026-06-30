@@ -5,8 +5,9 @@ WARNING: simulation-only, not for real aircraft.
 
 PX4 still runs its internal position, velocity, and attitude controllers.
 This node only changes the ROS 2 Offboard setpoint generation strategy:
-baseline position-only setpoints, position plus velocity feedforward, or
-smooth setpoints for trajectories with corners or step changes.
+baseline position-only setpoints, position plus velocity feedforward,
+planar XY-only feedforward, or smooth setpoints for trajectories with
+corners or step changes.
 """
 
 from __future__ import annotations
@@ -35,7 +36,7 @@ from rclpy.qos import ReliabilityPolicy
 
 
 SUPPORTED_TRAJECTORIES = {"hover", "line", "square", "circle", "figure8", "z_step"}
-SUPPORTED_CONTROLLER_MODES = {"baseline", "feedforward", "smooth"}
+SUPPORTED_CONTROLLER_MODES = {"baseline", "feedforward", "planar_ff", "smooth"}
 NAN_VECTOR = [math.nan, math.nan, math.nan]
 
 
@@ -60,6 +61,7 @@ class OffboardTrajectory(Node):
         self.declare_parameter("amplitude_y", 0.8)
         self.declare_parameter("radius", 1.0)
         self.declare_parameter("square_size", 1.5)
+        self.declare_parameter("ff_gain", 1.0)
         self.declare_parameter("max_speed", 1.0)
         self.declare_parameter("corner_slowdown", True)
         self.declare_parameter("smooth_time_scaling", True)
@@ -94,6 +96,7 @@ class OffboardTrajectory(Node):
         self.amplitude_y = float(self.get_parameter("amplitude_y").value)
         self.radius = float(self.get_parameter("radius").value)
         self.square_size = float(self.get_parameter("square_size").value)
+        self.ff_gain = max(0.0, float(self.get_parameter("ff_gain").value))
         self.max_speed = max(0.05, float(self.get_parameter("max_speed").value))
         self.corner_slowdown = bool(self.get_parameter("corner_slowdown").value)
         self.smooth_time_scaling = bool(self.get_parameter("smooth_time_scaling").value)
@@ -175,6 +178,7 @@ class OffboardTrajectory(Node):
             "stage",
             "trajectory_type",
             "controller_mode",
+            "ff_gain",
             "position_error_xy",
             "position_error_3d",
         ]
@@ -184,9 +188,17 @@ class OffboardTrajectory(Node):
 
         self.get_logger().warning("SIMULATION ONLY: do not use this node on a real aircraft.")
         self.get_logger().info(
-            "trajectory=%s controller_mode=%s altitude_ned=%.2f duration=%.1fs rate=%.1fHz; "
+            "trajectory=%s controller_mode=%s ff_gain=%.2f altitude_ned=%.2f "
+            "duration=%.1fs rate=%.1fHz; "
             "negative z is upward."
-            % (self.trajectory, self.controller_mode, self.altitude, self.duration_s, self.rate_hz)
+            % (
+                self.trajectory,
+                self.controller_mode,
+                self.ff_gain,
+                self.altitude,
+                self.duration_s,
+                self.rate_hz,
+            )
         )
         if self.dry_run:
             self.get_logger().warning("Dry-run is enabled: arm, OFFBOARD, and land commands are not sent.")
@@ -209,7 +221,13 @@ class OffboardTrajectory(Node):
         try:
             self.log_dir.mkdir(parents=True, exist_ok=True)
             stamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            filename = f"offboard_trajectory_{self.trajectory}_{self.controller_mode}_{stamp}.csv"
+            gain_suffix = ""
+            if self.controller_mode == "planar_ff":
+                gain_suffix = f"_g{self.format_gain_for_filename(self.ff_gain)}"
+            filename = (
+                f"offboard_trajectory_{self.trajectory}_{self.controller_mode}"
+                f"{gain_suffix}_{stamp}.csv"
+            )
             self.csv_path = (self.log_dir / filename).resolve()
             self.csv_file = self.csv_path.open("w", newline="", encoding="utf-8")
             self.csv_writer = csv.DictWriter(self.csv_file, fieldnames=self.csv_fieldnames)
@@ -220,6 +238,10 @@ class OffboardTrajectory(Node):
             self.get_logger().error(self.csv_error)
             self.csv_file = None
             self.csv_writer = None
+
+    @staticmethod
+    def format_gain_for_filename(value: float) -> str:
+        return f"{value:g}".replace("-", "m").replace(".", "p")
 
     def vehicle_status_callback(self, msg: VehicleStatus) -> None:
         self.vehicle_status = msg
@@ -377,6 +399,11 @@ class OffboardTrajectory(Node):
     def apply_controller_mode(self, setpoint: Setpoint) -> Setpoint:
         if self.controller_mode == "baseline":
             return Setpoint(setpoint.position, tuple(NAN_VECTOR))
+        if self.controller_mode == "planar_ff":
+            vx, vy, _vz = setpoint.velocity
+            scaled_velocity = self.clamp_velocity((self.ff_gain * vx, self.ff_gain * vy, 0.0))
+            target_position = (setpoint.position[0], setpoint.position[1], self.altitude)
+            return Setpoint(target_position, scaled_velocity)
         return Setpoint(setpoint.position, self.clamp_velocity(setpoint.velocity))
 
     def clamp_velocity(self, velocity: tuple[float, float, float]) -> tuple[float, float, float]:
@@ -485,12 +512,13 @@ class OffboardTrajectory(Node):
         target = setpoint.position
         target_velocity = setpoint.velocity
         self.get_logger().info(
-            "trajectory=%s mode=%s stage=%s arming_state=%s nav_state=%s "
+            "trajectory=%s mode=%s ff_gain=%.2f stage=%s arming_state=%s nav_state=%s "
             "position_ned=(%.2f, %.2f, %.2f) target_ned=(%.2f, %.2f, %.2f) "
             "target_vel=(%.2f, %.2f, %.2f)"
             % (
                 self.trajectory,
                 self.controller_mode,
+                self.ff_gain,
                 self.stage,
                 arming_state,
                 nav_state,
@@ -553,6 +581,7 @@ class OffboardTrajectory(Node):
                     "stage": self.stage,
                     "trajectory_type": self.trajectory,
                     "controller_mode": self.controller_mode,
+                    "ff_gain": self.ff_gain,
                     "position_error_xy": xy_error,
                     "position_error_3d": position_error,
                 }

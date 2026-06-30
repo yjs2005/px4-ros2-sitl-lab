@@ -35,8 +35,8 @@ PX4 local position 使用 NED 坐标系，`z` 轴向下，因此 `z=-2.0` 表示
 | `hover` | 已完成实测 | 固定 NED `(0, 0, -2)` 悬停 |
 | `figure8` | 已完成实测 | 8 字轨迹 CSV 已分析 |
 | `line` | 节点已支持，待运行实验 | x 方向平滑往返 |
-| `square` | 节点已支持，待运行实验 | 四角点循环插值 |
-| `circle` | 节点已支持，待运行实验 | 圆轨迹 setpoint |
+| `square` | 已完成 baseline / smooth 成对实测 | 四角点循环插值 |
+| `circle` | 已完成 baseline / feedforward 成对实测 | 圆轨迹 setpoint |
 | `z_step` | 节点已支持，待运行实验 | 高度阶跃/平滑响应测试 |
 
 统一节点：
@@ -52,18 +52,28 @@ ros2 run px4_offboard_lab offboard_trajectory --ros-args -p trajectory:=circle -
 | 控制模式 | 定义 | 状态 |
 | --- | --- | --- |
 | `baseline` | position-only setpoint，velocity/acceleration 为 NaN | 已实现 |
-| `feedforward` | position + velocity feedforward，acceleration 暂为 NaN | 已实现，待成对实验 |
-| `smooth` | 平滑轨迹 / 拐角减速 + velocity feedforward | 已实现，待成对实验 |
+| `feedforward` | position + velocity feedforward，acceleration 暂为 NaN | 已实现，已有 circle / figure8 成对 CSV |
+| `planar_ff` | position + XY-only velocity feedforward，`vz=0.0`，支持 `ff_gain` 调节 | 已实现，待 SITL 实验验证 |
+| `smooth` | 平滑轨迹 / 拐角减速 + velocity feedforward | 已实现，已有 square 成对 CSV |
 
 计划对比：
 
 - `circle baseline` vs `circle feedforward`
 - `figure8 baseline` vs `figure8 feedforward`
+- `figure8 baseline` vs `figure8 planar_ff`，用于验证 XY-only feedforward 是否能避免高度误差放大
 - `square baseline` vs `square smooth`
 - `line baseline` vs `line smooth`
 - `z_step baseline` vs `z_step smooth`
 
-当前还没有完整成对控制对比实验结果，因此 README Results 不提前宣称误差下降。详细说明见 [docs/control_improvement.md](docs/control_improvement.md)。
+`planar_ff` 是新增的轻量级控制优化框架：只在 ROS 2 Offboard 外层调整 setpoint 生成，不改 PX4 内部飞控；它针对 figure-eight full feedforward 中“XY 误差下降但高度误差变大”的现象，将速度前馈限制在 NED XY 平面，并通过 `ff_gain` 控制强度。当前已有 baseline / feedforward / smooth 的成对 CSV 和离线对比结果，`planar_ff` 仍待 SITL 实验验证，因此 README Results 不提前宣称 `planar_ff` 提升。详细说明见 [docs/control_improvement.md](docs/control_improvement.md)。
+
+后续验证命令示例：
+
+```bash
+bash scripts/run_trajectory.sh figure8 planar_ff 0.5
+bash scripts/run_trajectory.sh figure8 planar_ff 0.8
+bash scripts/run_trajectory.sh figure8 planar_ff 1.0
+```
 
 ## 项目亮点
 
@@ -123,7 +133,7 @@ make px4_sitl gz_x500
 bash scripts/run_trajectory.sh circle baseline
 ```
 
-可选轨迹：`hover`、`line`、`square`、`circle`、`figure8`、`z_step`。可选控制模式：`baseline`、`feedforward`、`smooth`。
+可选轨迹：`hover`、`line`、`square`、`circle`、`figure8`、`z_step`。可选控制模式：`baseline`、`feedforward`、`planar_ff`、`smooth`。
 
 ## CSV 自动保存与安全运行
 
@@ -133,6 +143,12 @@ bash scripts/run_trajectory.sh circle baseline
 
 ```text
 logs/offboard_trajectory_<trajectory>_<controller_mode>_<timestamp>.csv
+```
+
+`planar_ff` 会额外把 gain 写入 CSV，并尽量写入文件名，例如：
+
+```text
+logs/offboard_trajectory_figure8_planar_ff_g0p8_<timestamp>.csv
 ```
 
 安全约束：
@@ -148,6 +164,7 @@ logs/offboard_trajectory_<trajectory>_<controller_mode>_<timestamp>.csv
 ```bash
 bash scripts/run_trajectory.sh circle baseline
 bash scripts/run_trajectory.sh circle feedforward
+bash scripts/run_trajectory.sh figure8 planar_ff 0.8
 bash scripts/run_trajectory.sh square smooth
 ```
 
@@ -192,6 +209,7 @@ bash scripts/run_offboard_hover.sh
 bash scripts/run_figure8.sh
 bash scripts/run_trajectory.sh circle baseline
 bash scripts/run_trajectory.sh circle feedforward
+bash scripts/run_trajectory.sh figure8 planar_ff 0.8
 bash scripts/run_trajectory.sh square smooth
 ```
 

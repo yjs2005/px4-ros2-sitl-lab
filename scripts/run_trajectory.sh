@@ -1,11 +1,12 @@
 #!/usr/bin/env bash
-set -eo pipefail
+set -euo pipefail
 
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "${PROJECT_ROOT}"
 
 TRAJECTORY="${1:-circle}"
 CONTROLLER_MODE="${2:-baseline}"
+FF_GAIN="${3:-1.0}"
 
 case "${TRAJECTORY}" in
   hover|line|square|circle|figure8|z_step)
@@ -18,11 +19,11 @@ case "${TRAJECTORY}" in
 esac
 
 case "${CONTROLLER_MODE}" in
-  baseline|feedforward|smooth)
+  baseline|feedforward|planar_ff|smooth)
     ;;
   *)
     echo "Unsupported controller mode: ${CONTROLLER_MODE}"
-    echo "Choose one of: baseline, feedforward, smooth"
+    echo "Choose one of: baseline, feedforward, planar_ff, smooth"
     exit 1
     ;;
 esac
@@ -32,6 +33,7 @@ PX4 Offboard trajectory runner (SITL only).
 
 Selected trajectory: ${TRAJECTORY}
 Selected controller mode: ${CONTROLLER_MODE}
+Selected feedforward gain: ${FF_GAIN}
 CSV log directory: ${PROJECT_ROOT}/logs
 
 Prerequisites:
@@ -78,6 +80,7 @@ set +e
 ros2 run px4_offboard_lab offboard_trajectory --ros-args \
   -p trajectory:="${TRAJECTORY}" \
   -p controller_mode:="${CONTROLLER_MODE}" \
+  -p ff_gain:="${FF_GAIN}" \
   -p log_dir:="${PROJECT_ROOT}/logs" \
   -p save_csv:=true
 status=$?

@@ -199,6 +199,13 @@ ros2 topic list | grep fmu
 - Do not connect the node to a physical vehicle.
 - Actual flight validation must be deliberately run in PX4 SITL after Agent, PX4, Gazebo, and ROS 2 topics are verified.
 
+### Invalid CSV Should Not Be Used For Control Comparison
+
+- Treat a run as failed if `arming_state` does not reach or remain near `2` during the expected flight window.
+- Treat a run as failed if `position_ned.z` stays far from the target altitude, for example never approaching `-2.0`.
+- Treat a run as failed if the CSV never reaches the intended tracking stage.
+- Do not delete failed logs. Move them to `logs/bad_runs/` so they remain available for debugging but are not included in final comparison metrics.
+
 ## Phase 3 First Failed Run: Preflight / GCS Not Ready
 
 ### Problem Description

@@ -36,6 +36,7 @@ OPTIONAL_COLUMNS = [
     "target_vy",
     "target_vz",
     "controller_mode",
+    "ff_gain",
     "position_error_xy",
     "position_error_3d",
 ]
@@ -79,7 +80,7 @@ def load_csv(path: Path, logs_dir: Path) -> pd.DataFrame | None:
 
     for column in OPTIONAL_COLUMNS:
         if column not in df.columns:
-            df[column] = math.nan if column != "controller_mode" else "unknown"
+            df[column] = "unknown" if column == "controller_mode" else math.nan
 
     numeric_columns = [
         column

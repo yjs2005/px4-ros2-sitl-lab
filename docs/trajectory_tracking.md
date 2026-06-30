@@ -99,6 +99,7 @@ Or through the helper:
 ```bash
 bash scripts/run_trajectory.sh circle baseline
 bash scripts/run_trajectory.sh circle feedforward
+bash scripts/run_trajectory.sh figure8 planar_ff 0.8
 bash scripts/run_trajectory.sh square smooth
 ```
 
@@ -116,6 +117,7 @@ All modes publish setpoints at 20 Hz by default and log CSV rows with:
 - stage
 - trajectory type
 - controller mode
+- feedforward gain
 - XY position error
 - 3D position error
 
@@ -126,6 +128,12 @@ offboard_trajectory_<trajectory>_<controller_mode>_<timestamp>.csv
 ```
 
 When launched through `scripts/run_trajectory.sh`, CSV logs are saved under the project `logs/` directory automatically. Existing CSV files are not overwritten or deleted.
+
+For `planar_ff`, filenames include the gain when possible, for example:
+
+```text
+offboard_trajectory_figure8_planar_ff_g0p8_<timestamp>.csv
+```
 
 The node prints one of these exit messages:
 
@@ -140,6 +148,7 @@ The unified node supports:
 
 - `baseline`: position-only setpoint; velocity and acceleration are NaN.
 - `feedforward`: position plus analytic velocity feedforward; acceleration remains NaN.
+- `planar_ff`: position setpoint plus XY-only velocity feedforward; `vz=0.0`; `ff_gain` controls the XY feedforward strength.
 - `smooth`: smooth time scaling / corner slowdown plus velocity feedforward.
 
 PX4 internal controllers are not modified. PX4 still performs the inner position, velocity, attitude, and rate control. The experiment changes only the ROS 2 Offboard setpoint generation strategy.
@@ -196,7 +205,7 @@ z switches smoothly between -1.5 and -2.5
 
 ## Trajectory Suite Analysis
 
-Future line/square/circle/z_step runs can be summarized together:
+Committed circle, figure-eight, and square comparison logs can be summarized together, and future line/z_step/planar_ff runs can be added to the same suite:
 
 ```bash
 python analysis/analyze_trajectory_suite.py
@@ -230,6 +239,7 @@ The script scans only new logs that explicitly include `controller_mode`, such a
 ```text
 offboard_trajectory_circle_baseline_<timestamp>.csv
 offboard_trajectory_circle_feedforward_<timestamp>.csv
+offboard_trajectory_figure8_planar_ff_g0p8_<timestamp>.csv
 offboard_trajectory_square_smooth_<timestamp>.csv
 ```
 

@@ -114,6 +114,7 @@ Example:
 cd ~/src/px4-ros2-sitl-lab
 bash scripts/run_trajectory.sh circle baseline
 bash scripts/run_trajectory.sh circle feedforward
+bash scripts/run_trajectory.sh figure8 planar_ff 0.8
 bash scripts/run_trajectory.sh square smooth
 ```
 
@@ -123,7 +124,15 @@ Equivalent direct ROS 2 command:
 ros2 run px4_offboard_lab offboard_trajectory --ros-args -p trajectory:=circle -p controller_mode:=baseline
 ```
 
-Only hover and figure-eight have committed successful CSV results in this repository. Other modes are implemented and should be run deliberately in SITL before claiming results.
+`planar_ff` is the z-safe feedforward mode. It applies velocity feedforward only in the NED XY plane and uses the optional third script argument as `ff_gain`:
+
+```bash
+bash scripts/run_trajectory.sh figure8 planar_ff 0.5
+bash scripts/run_trajectory.sh figure8 planar_ff 0.8
+bash scripts/run_trajectory.sh figure8 planar_ff 1.0
+```
+
+The repository includes committed hover, first figure-eight, and paired circle / figure-eight / square control-comparison CSV logs. `line`, `z_step`, and the new `planar_ff` mode should be run deliberately in SITL before claiming results for them.
 
 ## CSV Auto-Save
 
@@ -133,6 +142,7 @@ Only hover and figure-eight have committed successful CSV results in this reposi
 ros2 run px4_offboard_lab offboard_trajectory --ros-args \
   -p trajectory:=circle \
   -p controller_mode:=baseline \
+  -p ff_gain:=1.0 \
   -p log_dir:=<project-root>/logs \
   -p save_csv:=true
 ```
@@ -143,6 +153,12 @@ Each run writes:
 logs/offboard_trajectory_<trajectory>_<controller_mode>_<YYYYMMDD_HHMMSS>.csv
 ```
 
+For `planar_ff`, the filename includes the gain when possible:
+
+```text
+logs/offboard_trajectory_figure8_planar_ff_g0p8_<YYYYMMDD_HHMMSS>.csv
+```
+
 The runner script does not start PX4, Gazebo, or Agent. It also does not kill processes, delete files, reset the workspace, or modify PX4 parameters.
 
 Recommended paired commands:
@@ -150,6 +166,7 @@ Recommended paired commands:
 ```bash
 bash scripts/run_trajectory.sh circle baseline
 bash scripts/run_trajectory.sh circle feedforward
+bash scripts/run_trajectory.sh figure8 planar_ff 0.8
 bash scripts/run_trajectory.sh square smooth
 ```
 
