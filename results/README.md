@@ -57,6 +57,7 @@ It scans only logs that explicitly include `controller_mode` and match:
 
 - `logs/offboard_trajectory_*_baseline_*.csv`
 - `logs/offboard_trajectory_*_feedforward_*.csv`
+- `logs/offboard_trajectory_*_planar_ff_*.csv`
 - `logs/offboard_trajectory_*_smooth_*.csv`
 
 Outputs:
@@ -69,6 +70,55 @@ Outputs:
 - `results/figures/control_comparison_percent_improvement.png`
 
 If paired logs are missing, the script exits normally and reports that paired SITL experiments should be run first. Existing hover and figure-eight result files are not reclassified as feedforward or smooth results.
+
+## Figure-eight planar feedforward gain sweep
+
+Generation command:
+
+```bash
+python analysis/compare_figure8_planar_ff_gain.py
+```
+
+Purpose:
+
+- Full velocity feedforward significantly reduced figure-eight XY RMSE.
+- The same full feedforward run increased z RMSE, 3D RMSE, and max 3D error.
+- Planar feedforward was tested with `ff_gain = 0.5`, `0.8`, and `1.0` to check whether XY improvement could be retained while reducing vertical/3D degradation.
+
+Inputs:
+
+- `logs/offboard_trajectory_figure8_baseline_20260630_115423.csv`
+- `logs/offboard_trajectory_figure8_feedforward_20260630_120214.csv`
+- `logs/offboard_trajectory_figure8_planar_ff_g0p5_20260630_130443.csv`
+- `logs/offboard_trajectory_figure8_planar_ff_g0p8_20260630_130300.csv`
+- `logs/offboard_trajectory_figure8_planar_ff_g1_20260630_130606.csv`
+
+Outputs:
+
+- `results/figure8_planar_ff_gain_metrics.csv`
+- `results/figure8_planar_ff_gain_metrics.json`
+- `results/figure8_planar_ff_gain_metrics.md`
+- `results/figures/figure8_planar_ff_xy_rmse.png`
+- `results/figures/figure8_planar_ff_z_rmse.png`
+- `results/figures/figure8_planar_ff_3d_rmse.png`
+- `results/figures/figure8_planar_ff_final_error.png`
+- `results/figures/figure8_planar_ff_xy_tracking.png`
+
+Key observation from this dataset:
+
+- Baseline: XY RMSE `0.2208 m`, z RMSE `0.1871 m`, 3D RMSE `0.2894 m`.
+- Full feedforward: XY RMSE improved to `0.0611 m`, but z RMSE worsened to `0.3790 m` and 3D RMSE worsened to `0.3839 m`.
+- `planar_ff g=0.8`: XY RMSE `0.0770 m`, z RMSE `0.1990 m`, 3D RMSE `0.2134 m`.
+
+In this run, `planar_ff g=0.8` gives the best tradeoff among the tested planar gains: it keeps most of the XY improvement from full feedforward while avoiding the large z/3D error increase seen in full feedforward. This is an experiment observation from the current SITL logs, not a general robustness claim.
+
+![Figure-eight planar FF XY RMSE](figures/figure8_planar_ff_xy_rmse.png)
+
+![Figure-eight planar FF z RMSE](figures/figure8_planar_ff_z_rmse.png)
+
+![Figure-eight planar FF 3D RMSE](figures/figure8_planar_ff_3d_rmse.png)
+
+![Figure-eight planar FF XY tracking](figures/figure8_planar_ff_xy_tracking.png)
 
 ## Hover Analysis
 
