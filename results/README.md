@@ -1,5 +1,41 @@
 # Results
 
+## Final experiment summary
+
+The final offline analysis compares circle, square, and figure-eight tracking experiments across baseline and improved Offboard setpoint strategies. It uses only existing CSV logs and does not rerun PX4, Gazebo, ROS 2 nodes, or Offboard experiments.
+
+Summary documents:
+
+- [experiment_artifact_audit.md](experiment_artifact_audit.md)
+- [all_tracking_metrics.md](all_tracking_metrics.md)
+- [all_tracking_improvements.md](all_tracking_improvements.md)
+- [experiment_summary.md](experiment_summary.md)
+
+Key figures:
+
+- `results/figures/all_tracking_xy_rmse.png`
+- `results/figures/all_tracking_3d_rmse.png`
+- `results/figures/all_tracking_z_rmse.png`
+- `results/figures/all_tracking_improvement_summary.png`
+- `results/figures/circle_xy_tracking_comparison.png`
+- `results/figures/square_xy_tracking_comparison.png`
+- `results/figures/figure8_xy_tracking_comparison.png`
+- `results/figures/figure8_planar_ff_gain_xy_tracking_comparison.png`
+- `results/figures/circle_error_timeseries.png`
+- `results/figures/square_error_timeseries.png`
+- `results/figures/figure8_error_timeseries.png`
+- `results/figures/figure8_planar_ff_gain_error_timeseries.png`
+- `results/figures/circle_error_std_comparison.png`
+- `results/figures/square_error_std_comparison.png`
+- `results/figures/figure8_error_std_comparison.png`
+
+High-level observations from the current SITL CSV logs:
+
+- Circle feedforward lowers XY RMSE and 3D RMSE, although max 3D error is slightly higher.
+- Square smooth lowers XY RMSE and 3D RMSE, while XY/3D error standard deviation is higher in this single run.
+- Figure-eight full feedforward strongly lowers XY RMSE but worsens z RMSE, 3D RMSE, and max 3D error.
+- Figure-eight `planar_ff g=0.8` is the best tested tradeoff in this dataset: it keeps strong XY improvement while avoiding the full feedforward z/3D degradation.
+
 本目录保存 PX4 SITL Offboard 实验的轻量、可复现分析结果，包括 Markdown 指标、JSON/CSV 汇总和 PNG 图表。
 
 ## 项目级汇总

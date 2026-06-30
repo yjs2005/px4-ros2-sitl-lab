@@ -1,0 +1,112 @@
+{
+  "rows": [
+    {
+      "trajectory": "circle",
+      "mode": "baseline",
+      "selected_csv": "logs/offboard_trajectory_circle_baseline_20260629_235707.csv",
+      "file_size": 227778,
+      "samples": 771,
+      "duration_s": 39.999968,
+      "whether_valid": true,
+      "figures_present": "results/figures/all_tracking_3d_error_std.png;results/figures/all_tracking_3d_rmse.png;results/figures/all_tracking_final_error.png;results/figures/all_tracking_improvement_summary.png;results/figures/all_tracking_xy_error_std.png;results/figures/all_tracking_xy_rmse.png;results/figures/all_tracking_z_rmse.png;results/figures/circle_error_std_comparison.png;results/figures/circle_error_timeseries.png;results/figures/circle_xy_tracking_comparison.png",
+      "figures_missing": "",
+      "notes": ""
+    },
+    {
+      "trajectory": "circle",
+      "mode": "feedforward",
+      "selected_csv": "logs/offboard_trajectory_circle_feedforward_20260630_003510.csv",
+      "file_size": 257488,
+      "samples": 772,
+      "duration_s": 39.950033,
+      "whether_valid": true,
+      "figures_present": "results/figures/all_tracking_3d_error_std.png;results/figures/all_tracking_3d_rmse.png;results/figures/all_tracking_final_error.png;results/figures/all_tracking_improvement_summary.png;results/figures/all_tracking_xy_error_std.png;results/figures/all_tracking_xy_rmse.png;results/figures/all_tracking_z_rmse.png;results/figures/circle_error_std_comparison.png;results/figures/circle_error_timeseries.png;results/figures/circle_xy_tracking_comparison.png",
+      "figures_missing": "",
+      "notes": ""
+    },
+    {
+      "trajectory": "square",
+      "mode": "baseline",
+      "selected_csv": "logs/offboard_trajectory_square_baseline_20260630_120601.csv",
+      "file_size": 210283,
+      "samples": 771,
+      "duration_s": 39.95013,
+      "whether_valid": true,
+      "figures_present": "results/figures/all_tracking_3d_error_std.png;results/figures/all_tracking_3d_rmse.png;results/figures/all_tracking_final_error.png;results/figures/all_tracking_improvement_summary.png;results/figures/all_tracking_xy_error_std.png;results/figures/all_tracking_xy_rmse.png;results/figures/all_tracking_z_rmse.png;results/figures/square_error_std_comparison.png;results/figures/square_error_timeseries.png;results/figures/square_xy_tracking_comparison.png",
+      "figures_missing": "",
+      "notes": ""
+    },
+    {
+      "trajectory": "square",
+      "mode": "smooth",
+      "selected_csv": "logs/offboard_trajectory_square_smooth_20260630_120804.csv",
+      "file_size": 227368,
+      "samples": 767,
+      "duration_s": 39.95014,
+      "whether_valid": true,
+      "figures_present": "results/figures/all_tracking_3d_error_std.png;results/figures/all_tracking_3d_rmse.png;results/figures/all_tracking_final_error.png;results/figures/all_tracking_improvement_summary.png;results/figures/all_tracking_xy_error_std.png;results/figures/all_tracking_xy_rmse.png;results/figures/all_tracking_z_rmse.png;results/figures/square_error_std_comparison.png;results/figures/square_error_timeseries.png;results/figures/square_xy_tracking_comparison.png",
+      "figures_missing": "",
+      "notes": ""
+    },
+    {
+      "trajectory": "figure8",
+      "mode": "baseline",
+      "selected_csv": "logs/offboard_trajectory_figure8_baseline_20260630_115423.csv",
+      "file_size": 235554,
+      "samples": 800,
+      "duration_s": 39.949938,
+      "whether_valid": true,
+      "figures_present": "results/figures/all_tracking_3d_error_std.png;results/figures/all_tracking_3d_rmse.png;results/figures/all_tracking_final_error.png;results/figures/all_tracking_improvement_summary.png;results/figures/all_tracking_xy_error_std.png;results/figures/all_tracking_xy_rmse.png;results/figures/all_tracking_z_rmse.png;results/figures/figure8_error_std_comparison.png;results/figures/figure8_error_timeseries.png;results/figures/figure8_planar_ff_gain_error_timeseries.png;results/figures/figure8_planar_ff_gain_xy_tracking_comparison.png;results/figures/figure8_xy_tracking_comparison.png",
+      "figures_missing": "",
+      "notes": ""
+    },
+    {
+      "trajectory": "figure8",
+      "mode": "feedforward",
+      "selected_csv": "logs/offboard_trajectory_figure8_feedforward_20260630_120214.csv",
+      "file_size": 255699,
+      "samples": 778,
+      "duration_s": 39.999876,
+      "whether_valid": true,
+      "figures_present": "results/figures/all_tracking_3d_error_std.png;results/figures/all_tracking_3d_rmse.png;results/figures/all_tracking_final_error.png;results/figures/all_tracking_improvement_summary.png;results/figures/all_tracking_xy_error_std.png;results/figures/all_tracking_xy_rmse.png;results/figures/all_tracking_z_rmse.png;results/figures/figure8_error_std_comparison.png;results/figures/figure8_error_timeseries.png;results/figures/figure8_planar_ff_gain_error_timeseries.png;results/figures/figure8_planar_ff_gain_xy_tracking_comparison.png;results/figures/figure8_xy_tracking_comparison.png",
+      "figures_missing": "",
+      "notes": ""
+    },
+    {
+      "trajectory": "figure8",
+      "mode": "planar_ff_g0p5",
+      "selected_csv": "logs/offboard_trajectory_figure8_planar_ff_g0p5_20260630_130443.csv",
+      "file_size": 262035,
+      "samples": 776,
+      "duration_s": 39.950151,
+      "whether_valid": true,
+      "figures_present": "results/figures/all_tracking_3d_error_std.png;results/figures/all_tracking_3d_rmse.png;results/figures/all_tracking_final_error.png;results/figures/all_tracking_improvement_summary.png;results/figures/all_tracking_xy_error_std.png;results/figures/all_tracking_xy_rmse.png;results/figures/all_tracking_z_rmse.png;results/figures/figure8_planar_ff_3d_rmse.png;results/figures/figure8_planar_ff_final_error.png;results/figures/figure8_planar_ff_gain_error_timeseries.png;results/figures/figure8_planar_ff_gain_xy_tracking_comparison.png;results/figures/figure8_planar_ff_xy_rmse.png;results/figures/figure8_planar_ff_z_rmse.png",
+      "figures_missing": "",
+      "notes": ""
+    },
+    {
+      "trajectory": "figure8",
+      "mode": "planar_ff_g0p8",
+      "selected_csv": "logs/offboard_trajectory_figure8_planar_ff_g0p8_20260630_130300.csv",
+      "file_size": 262604,
+      "samples": 780,
+      "duration_s": 40.000129,
+      "whether_valid": true,
+      "figures_present": "results/figures/all_tracking_3d_error_std.png;results/figures/all_tracking_3d_rmse.png;results/figures/all_tracking_final_error.png;results/figures/all_tracking_improvement_summary.png;results/figures/all_tracking_xy_error_std.png;results/figures/all_tracking_xy_rmse.png;results/figures/all_tracking_z_rmse.png;results/figures/figure8_error_std_comparison.png;results/figures/figure8_error_timeseries.png;results/figures/figure8_planar_ff_3d_rmse.png;results/figures/figure8_planar_ff_final_error.png;results/figures/figure8_planar_ff_gain_error_timeseries.png;results/figures/figure8_planar_ff_gain_xy_tracking_comparison.png;results/figures/figure8_planar_ff_xy_rmse.png;results/figures/figure8_planar_ff_z_rmse.png;results/figures/figure8_xy_tracking_comparison.png",
+      "figures_missing": "",
+      "notes": ""
+    },
+    {
+      "trajectory": "figure8",
+      "mode": "planar_ff_g1",
+      "selected_csv": "logs/offboard_trajectory_figure8_planar_ff_g1_20260630_130606.csv",
+      "file_size": 254786,
+      "samples": 749,
+      "duration_s": 40.00033,
+      "whether_valid": true,
+      "figures_present": "results/figures/all_tracking_3d_error_std.png;results/figures/all_tracking_3d_rmse.png;results/figures/all_tracking_final_error.png;results/figures/all_tracking_improvement_summary.png;results/figures/all_tracking_xy_error_std.png;results/figures/all_tracking_xy_rmse.png;results/figures/all_tracking_z_rmse.png;results/figures/figure8_planar_ff_3d_rmse.png;results/figures/figure8_planar_ff_final_error.png;results/figures/figure8_planar_ff_gain_error_timeseries.png;results/figures/figure8_planar_ff_gain_xy_tracking_comparison.png;results/figures/figure8_planar_ff_xy_rmse.png;results/figures/figure8_planar_ff_z_rmse.png",
+      "figures_missing": "",
+      "notes": ""
+    }
+  ]
+}
